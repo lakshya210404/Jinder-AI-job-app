@@ -97,7 +97,7 @@ export const SwipeInterface = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="p-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold gradient-text">SwipeJobs</h1>
+          <h1 className="text-xl font-bold gradient-text">Jinder</h1>
           <p className="text-xs text-muted-foreground">{applied} applications sent</p>
         </div>
         <Button variant="icon" size="icon">
