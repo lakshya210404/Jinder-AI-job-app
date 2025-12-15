@@ -8,8 +8,18 @@ import { PreferencesStep } from "./steps/PreferencesStep";
 import { SkillsStep } from "./steps/SkillsStep";
 import { ReadyStep } from "./steps/ReadyStep";
 
+interface UserData {
+  name: string;
+  email: string;
+  title: string;
+  location: string;
+  salaryRange: string;
+  workType: string;
+  skills: string[];
+}
+
 interface OnboardingFlowProps {
-  onComplete: () => void;
+  onComplete: (userData: UserData) => void;
 }
 
 export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
@@ -34,7 +44,15 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      onComplete();
+      onComplete({
+        name: profileData.name,
+        email: profileData.email,
+        title: profileData.title,
+        location: preferencesData.location,
+        salaryRange: preferencesData.salary,
+        workType: preferencesData.workType,
+        skills: skillsData.skills,
+      });
     }
   };
 
