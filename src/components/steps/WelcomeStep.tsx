@@ -1,11 +1,11 @@
-import { Zap } from "lucide-react";
 import { StatCard } from "../StatCard";
+import { JinderLogo } from "../JinderLogo";
 
 export const WelcomeStep = () => {
   return (
     <div className="flex flex-col items-center justify-center flex-1 px-6 animate-fade-in">
-      <div className="w-20 h-20 rounded-full gradient-button flex items-center justify-center mb-8 animate-pulse-glow">
-        <Zap className="w-10 h-10 text-primary-foreground" />
+      <div className="mb-8 animate-pulse-glow">
+        <JinderLogo size="lg" showText={false} />
       </div>
       
       <h1 className="text-3xl md:text-4xl font-bold text-center mb-4">

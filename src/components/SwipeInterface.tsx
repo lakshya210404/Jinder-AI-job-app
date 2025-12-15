@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, Heart, Undo2, Sparkles } from "lucide-react";
 import { Button } from "./ui/button";
 import { JobCard, Job } from "./JobCard";
+import { JinderLogo } from "./JinderLogo";
 import { toast } from "@/hooks/use-toast";
 
 const sampleJobs: Job[] = [
@@ -96,8 +97,8 @@ export const SwipeInterface = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="p-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold gradient-text">Jinder</h1>
+        <div className="flex flex-col">
+          <JinderLogo size="sm" />
           <p className="text-xs text-muted-foreground">{applied} applications sent</p>
         </div>
         <Button variant="icon" size="icon">

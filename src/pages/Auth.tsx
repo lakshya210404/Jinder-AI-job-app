@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/useAuth';
+import { JinderLogo } from '@/components/JinderLogo';
 import { useToast } from '@/hooks/use-toast';
 
 const authSchema = z.object({
@@ -133,9 +134,9 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold gradient-text mb-2">Jinder</h1>
-          <p className="text-muted-foreground">
+        <div className="flex flex-col items-center mb-8">
+          <JinderLogo size="lg" />
+          <p className="text-muted-foreground mt-2">
             {isLogin ? 'Welcome back! Sign in to continue.' : 'Create an account to get started.'}
           </p>
         </div>
