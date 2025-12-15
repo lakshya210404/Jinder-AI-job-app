@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      jobs: {
+        Row: {
+          company: string
+          created_at: string
+          description: string
+          id: string
+          location: string
+          logo_url: string | null
+          requirements: string[] | null
+          salary_max: number | null
+          salary_min: number | null
+          title: string
+          updated_at: string
+          work_type: string
+        }
+        Insert: {
+          company: string
+          created_at?: string
+          description: string
+          id?: string
+          location: string
+          logo_url?: string | null
+          requirements?: string[] | null
+          salary_max?: number | null
+          salary_min?: number | null
+          title: string
+          updated_at?: string
+          work_type?: string
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          description?: string
+          id?: string
+          location?: string
+          logo_url?: string | null
+          requirements?: string[] | null
+          salary_max?: number | null
+          salary_min?: number | null
+          title?: string
+          updated_at?: string
+          work_type?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -55,6 +100,38 @@ export type Database = {
           work_type?: string | null
         }
         Relationships: []
+      }
+      user_job_interactions: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          job_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          job_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          job_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_job_interactions_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

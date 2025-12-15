@@ -5,12 +5,12 @@ import { SwipeInterface } from "@/components/SwipeInterface";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { Settings } from "lucide-react";
 
 const Index = () => {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [checkingProfile, setCheckingProfile] = useState(true);
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -82,9 +82,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="fixed top-0 left-0 right-0 z-50 p-4 flex justify-end">
-        <Button variant="ghost" size="sm" onClick={signOut} className="gap-2">
-          <LogOut className="w-4 h-4" />
-          Sign Out
+        <Button variant="ghost" size="icon" onClick={() => navigate('/settings')}>
+          <Settings className="w-5 h-5" />
         </Button>
       </header>
       
