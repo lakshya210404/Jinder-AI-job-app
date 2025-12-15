@@ -67,16 +67,12 @@ const Index = () => {
     setOnboardingComplete(true);
   };
 
-  if (loading || checkingProfile) {
+  if (loading || checkingProfile || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
       </div>
     );
-  }
-
-  if (!user) {
-    return null;
   }
 
   return (
