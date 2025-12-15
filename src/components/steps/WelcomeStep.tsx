@@ -9,7 +9,7 @@ export const WelcomeStep = () => {
       </div>
       
       <h1 className="text-3xl md:text-4xl font-bold text-center mb-4">
-        Welcome to <span className="gradient-text">SwipeJobs</span>
+        Welcome to <span className="gradient-text">Jinder</span>
       </h1>
       
       <p className="text-muted-foreground text-center max-w-md mb-10 leading-relaxed">
