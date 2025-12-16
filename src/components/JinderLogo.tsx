@@ -21,7 +21,7 @@ export const JinderLogo = ({ className, size = "md", showText = true }: JinderLo
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <div className={cn("relative", sizeClasses[size])}>
+      <div className={cn("relative animate-flame-flicker", sizeClasses[size])}>
         {/* Flame shape with briefcase and heart combined */}
         <svg
           viewBox="0 0 64 64"
@@ -46,6 +46,7 @@ export const JinderLogo = ({ className, size = "md", showText = true }: JinderLo
           <path
             d="M32 4C32 4 18 18 18 32C18 38 20 44 24 48C22 44 21 40 21 36C21 28 28 20 32 16C36 20 43 28 43 36C43 40 42 44 40 48C44 44 46 38 46 32C46 18 32 4 32 4Z"
             fill="url(#flameGradient)"
+            className="animate-flame-glow"
           />
           
           {/* Inner heart-briefcase hybrid */}
