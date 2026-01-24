@@ -33,20 +33,11 @@ export const SplashScreen = ({ onComplete, duration = 2000 }: SplashScreenProps)
       )}
     >
       <div className="animate-scale-in">
-        <JinderLogo size="lg" className="scale-150" />
+        <JinderLogo size="lg" className="scale-125" />
       </div>
-      <p className="mt-8 text-muted-foreground animate-fade-in text-sm tracking-wider">
-        Swipe your way to your dream job
+      <p className="mt-6 text-muted-foreground animate-fade-in text-sm">
+        Find your perfect role
       </p>
-      <div className="absolute bottom-12 flex gap-1">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className="h-2 w-2 rounded-full bg-primary/50 animate-pulse"
-            style={{ animationDelay: `${i * 200}ms` }}
-          />
-        ))}
-      </div>
     </div>
   );
 };
