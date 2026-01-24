@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Shield, Zap, MessageCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft, Shield, Zap, MessageCircle, Loader2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PricingCard } from "@/components/pricing/PricingCard";
 import { PricingToggle } from "@/components/pricing/PricingToggle";
 import { useJobSeekerPlans, useRecruiterPlans } from "@/hooks/useSubscriptionPlans";
+import { useSubscription, STRIPE_PRICES } from "@/hooks/useSubscription";
+import { useAuth } from "@/hooks/useAuth";
 import type { SubscriptionPlan } from "@/hooks/useSubscriptionPlans";
 import { toast } from "sonner";
 
@@ -12,22 +14,85 @@ type PlanCategory = "seeker" | "recruiter";
 
 export default function Pricing() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const [category, setCategory] = useState<PlanCategory>("seeker");
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   
   const { data: seekerPlans, isLoading: seekerLoading } = useJobSeekerPlans();
   const { data: recruiterPlans, isLoading: recruiterLoading } = useRecruiterPlans();
+  const { planSlug, subscribed, createCheckout, openCustomerPortal, checkSubscription, isLoading: subLoading } = useSubscription();
 
   const plans = category === "seeker" ? seekerPlans : recruiterPlans;
   const isLoading = category === "seeker" ? seekerLoading : recruiterLoading;
 
-  const handleSelectPlan = (plan: SubscriptionPlan) => {
-    if (plan.price_monthly === 0) {
-      navigate("/auth");
-    } else {
-      // TODO: Integrate Stripe checkout
-      toast.info("Stripe checkout coming soon!", {
-        description: `Selected: ${plan.name} - $${plan.price_monthly / 100}/month`,
+  // Handle success/cancel URL params
+  useEffect(() => {
+    if (searchParams.get("success") === "true") {
+      toast.success("Subscription activated! 🎉", {
+        description: "Welcome to your new plan. Enjoy the premium features!",
       });
+      checkSubscription();
+    } else if (searchParams.get("canceled") === "true") {
+      toast.info("Checkout canceled", {
+        description: "No changes were made to your subscription.",
+      });
+    }
+  }, [searchParams, checkSubscription]);
+
+  const handleSelectPlan = async (plan: SubscriptionPlan) => {
+    // Free plan - just navigate to signup
+    if (plan.price_monthly === 0) {
+      if (!user) {
+        navigate("/auth");
+      }
+      return;
+    }
+
+    // Check if plan is available for Stripe checkout
+    const stripePlan = STRIPE_PRICES[plan.slug as keyof typeof STRIPE_PRICES];
+    if (!stripePlan) {
+      toast.info("Coming soon!", {
+        description: `${plan.name} plan checkout will be available soon.`,
+      });
+      return;
+    }
+
+    // Require auth for paid plans
+    if (!user) {
+      toast.info("Please sign in first", {
+        description: "You need to be logged in to upgrade your plan.",
+      });
+      navigate("/auth");
+      return;
+    }
+
+    setLoadingPlan(plan.slug);
+    try {
+      const url = await createCheckout(plan.slug);
+      window.open(url, "_blank");
+    } catch (err) {
+      console.error("Checkout error:", err);
+      toast.error("Failed to start checkout", {
+        description: err instanceof Error ? err.message : "Please try again",
+      });
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setLoadingPlan("manage");
+    try {
+      const url = await openCustomerPortal();
+      window.open(url, "_blank");
+    } catch (err) {
+      console.error("Portal error:", err);
+      toast.error("Failed to open billing portal", {
+        description: err instanceof Error ? err.message : "Please try again",
+      });
+    } finally {
+      setLoadingPlan(null);
     }
   };
 
@@ -47,7 +112,22 @@ export default function Pricing() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-lg font-semibold">Pricing</h1>
-          <div className="w-10" />
+          {subscribed && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleManageSubscription}
+              disabled={loadingPlan === "manage"}
+              className="rounded-full"
+            >
+              {loadingPlan === "manage" ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Settings className="h-5 w-5" />
+              )}
+            </Button>
+          )}
+          {!subscribed && <div className="w-10" />}
         </div>
       </header>
 
@@ -61,6 +141,13 @@ export default function Pricing() {
             Choose the perfect plan to unlock your full potential. Start free, upgrade when you're ready.
           </p>
           <PricingToggle value={category} onChange={setCategory} />
+          
+          {user && (
+            <div className="mt-4 text-sm text-muted-foreground">
+              Current plan: <span className="font-medium text-foreground capitalize">{planSlug}</span>
+              {subLoading && <Loader2 className="inline ml-2 h-3 w-3 animate-spin" />}
+            </div>
+          )}
         </div>
 
         {/* Plans Grid */}
@@ -85,6 +172,8 @@ export default function Pricing() {
                 plan={plan}
                 isPopular={plan.slug === popularPlanSlug}
                 onSelect={handleSelectPlan}
+                isCurrentPlan={plan.slug === planSlug}
+                isLoading={loadingPlan === plan.slug}
               />
             ))}
           </div>
@@ -105,6 +194,20 @@ export default function Pricing() {
             <span className="text-sm">24/7 Support</span>
           </div>
         </div>
+
+        {/* Manage Subscription CTA */}
+        {subscribed && (
+          <div className="mt-12 text-center">
+            <Button 
+              variant="outline" 
+              onClick={handleManageSubscription}
+              disabled={loadingPlan === "manage"}
+            >
+              {loadingPlan === "manage" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Manage Subscription
+            </Button>
+          </div>
+        )}
 
         {/* FAQ Teaser */}
         <div className="mt-20 text-center">
