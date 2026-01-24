@@ -12,7 +12,8 @@ interface UserData {
   name: string;
   email: string;
   title: string;
-  location: string;
+  locations: string[];
+  interests: string[];
   salaryRange: string;
   workType: string;
   skills: string[];
@@ -30,7 +31,8 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
     title: "",
   });
   const [preferencesData, setPreferencesData] = useState({
-    location: "",
+    locations: [] as string[],
+    interests: [] as string[],
     salary: "",
     workType: "",
   });
@@ -48,7 +50,8 @@ export const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
         name: profileData.name,
         email: profileData.email,
         title: profileData.title,
-        location: preferencesData.location,
+        locations: preferencesData.locations,
+        interests: preferencesData.interests,
         salaryRange: preferencesData.salary,
         workType: preferencesData.workType,
         skills: skillsData.skills,
