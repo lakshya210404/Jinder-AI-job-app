@@ -8,7 +8,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -59,6 +58,30 @@ const interests = [
   { value: "gaming", label: "Gaming" },
   { value: "environmental", label: "Environmental / Sustainability" },
 ];
+
+// Custom checkbox component matching the reference image
+const CustomCheckbox = ({ checked }: { checked: boolean }) => (
+  <div 
+    className={cn(
+      "h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
+      checked 
+        ? "bg-primary border-primary" 
+        : "border-muted-foreground/40 bg-transparent"
+    )}
+  >
+    {checked && (
+      <svg 
+        className="h-3 w-3 text-primary-foreground" 
+        fill="none" 
+        viewBox="0 0 24 24" 
+        stroke="currentColor" 
+        strokeWidth={3}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    )}
+  </div>
+);
 
 interface InterestsComboboxProps {
   value: string[];
@@ -148,25 +171,23 @@ export function InterestsCombobox({
               />
             </div>
           </div>
-          <ScrollArea className="h-[200px]">
-            <div className="p-1">
+          <ScrollArea className="h-[220px]">
+            <div className="py-1">
               {filteredInterests.length === 0 ? (
                 <div className="py-6 text-center text-sm text-muted-foreground">
                   No interest found.
                 </div>
               ) : (
                 filteredInterests.map((interest) => (
-                  <label
+                  <button
                     key={interest.value}
-                    className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
+                    type="button"
+                    onClick={() => toggleInterest(interest.label)}
+                    className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-muted/80 cursor-pointer transition-colors text-left"
                   >
-                    <Checkbox
-                      checked={isSelected(interest.label)}
-                      onCheckedChange={() => toggleInterest(interest.label)}
-                      className="border-muted-foreground/50"
-                    />
+                    <CustomCheckbox checked={isSelected(interest.label)} />
                     <span className="text-sm">{interest.label}</span>
-                  </label>
+                  </button>
                 ))
               )}
             </div>
