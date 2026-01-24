@@ -32,8 +32,8 @@ export default function Jobs() {
   const navigate = useNavigate();
   const { externalJobs, loading: externalLoading, fetchExternalJobs } = useExternalJobs();
 
-  // Combine database jobs and external jobs
-  const jobs = [...dbJobs, ...externalJobs];
+  // Combine jobs (show web results first so they're immediately visible)
+  const jobs = [...externalJobs, ...dbJobs];
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -198,6 +198,8 @@ export default function Jobs() {
     fetchExternalJobs({ query: searchQuery, location: locationQuery });
   };
 
+  const filteredWebJobsCount = filteredJobs.filter((j) => j.source === "external").length;
+
   const isLoading = loading || externalLoading;
 
   return (
@@ -209,6 +211,11 @@ export default function Jobs() {
             <h1 className="text-3xl font-bold text-foreground">Browse Jobs</h1>
             <p className="text-muted-foreground mt-1">
               {isLoading ? "Searching for jobs..." : `Found ${filteredJobs.length} jobs from multiple sources`}
+              {!isLoading && (
+                <span className="block text-xs text-muted-foreground mt-1">
+                  {filteredWebJobsCount} from the web • {filteredJobs.length - filteredWebJobsCount} from your database
+                </span>
+              )}
             </p>
           </div>
           <Button

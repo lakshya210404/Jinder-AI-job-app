@@ -17,6 +17,74 @@ interface JobResult {
   logo_url?: string;
 }
 
+function isLikelyJobPostingUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase();
+    const path = u.pathname.toLowerCase();
+
+    // Exclude common list/search pages early
+    if (
+      path.includes('/q-') ||
+      path.includes('/jobs?q=') ||
+      path.endsWith('/jobs') ||
+      path.endsWith('/jobs/')
+    ) {
+      return false;
+    }
+
+    // ATS platforms (best odds of being a single posting)
+    if (host.endsWith('jobs.lever.co')) {
+      // /company/job-slug
+      return path.split('/').filter(Boolean).length >= 2;
+    }
+    if (host === 'boards.greenhouse.io' || host.endsWith('.greenhouse.io')) {
+      // /company/jobs/<id>
+      return /\/jobs\/[0-9]+/.test(path) || path.includes('/jobs/');
+    }
+    if (host.endsWith('ashbyhq.com')) {
+      // /company/job/<id>
+      return path.includes('/job/');
+    }
+    if (host.endsWith('myworkdayjobs.com')) {
+      return path.includes('/job/');
+    }
+    if (host.endsWith('apply.workable.com')) {
+      // /<company>/j/<id>
+      return path.includes('/j/');
+    }
+
+    // Fallback sources
+    if (host.includes('indeed.com')) {
+      return path.includes('/viewjob') || u.searchParams.has('jk');
+    }
+    if (host.includes('glassdoor.com')) {
+      return path.includes('job-listing') || path.includes('joblisting');
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function guessCompanyFromUrl(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase();
+    const parts = u.pathname.split('/').filter(Boolean);
+
+    if (host.endsWith('jobs.lever.co') && parts[0]) return parts[0];
+    if ((host === 'boards.greenhouse.io' || host.endsWith('.greenhouse.io')) && parts[0]) return parts[0];
+    if (host.endsWith('ashbyhq.com') && parts[0]) return parts[0];
+    if (host.endsWith('apply.workable.com') && parts[0]) return parts[0];
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 // Input validation constants
 const MAX_QUERY_LENGTH = 200;
 const MAX_LOCATION_LENGTH = 100;
@@ -124,10 +192,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build search query for job postings
-    const searchQuery = location 
-      ? `${query} jobs ${location} site:linkedin.com OR site:indeed.com OR site:glassdoor.com`
-      : `${query} jobs site:linkedin.com OR site:indeed.com OR site:glassdoor.com`;
+    // Build search query biased towards individual job posting pages (not list/search pages)
+    const siteQuery = `(
+      site:jobs.lever.co OR
+      site:boards.greenhouse.io OR
+      site:jobs.ashbyhq.com OR
+      site:apply.workable.com OR
+      site:myworkdayjobs.com OR
+      site:indeed.com OR
+      site:glassdoor.com
+    )`;
+
+    const inurlQuery = '(inurl:job OR inurl:jobs OR inurl:viewjob OR inurl:job-listing)';
+    const searchQuery = location
+      ? `${query} ${location} ${inurlQuery} ${siteQuery}`
+      : `${query} ${inurlQuery} ${siteQuery}`;
 
     console.log('User', userId, 'searching for jobs:', searchQuery);
 
@@ -157,10 +236,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Search returned', data.data?.length || 0, 'results for user', userId);
+    const rawResults = data.data || [];
+    console.log('Search returned', rawResults.length || 0, 'results for user', userId);
+
+    // Keep only URLs that look like a single job posting page
+    const filteredResults = rawResults.filter((r: any) => typeof r?.url === 'string' && isLikelyJobPostingUrl(r.url));
+    console.log('Filtered to', filteredResults.length, 'likely job posting URLs for user', userId);
 
     // Parse job results from Firecrawl search
-    const jobs: JobResult[] = (data.data || []).map((result: any) => {
+    const jobs: JobResult[] = filteredResults.map((result: any) => {
       // Extract company from URL or title
       const url = result.url || '';
       const title = result.title || 'Job Position';
@@ -186,6 +270,11 @@ Deno.serve(async (req) => {
           jobTitle = dashMatch[1].trim();
           company = dashMatch[2].trim();
         }
+      }
+
+      if (company === 'Company') {
+        const guessed = guessCompanyFromUrl(url);
+        if (guessed) company = guessed;
       }
 
       // Extract location from description or URL

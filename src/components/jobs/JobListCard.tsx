@@ -65,9 +65,16 @@ export function JobListCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="font-semibold text-foreground text-lg leading-tight">
-                {job.title}
-              </h3>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-semibold text-foreground text-lg leading-tight">
+                  {job.title}
+                </h3>
+                {job.source === "external" && (
+                  <Badge variant="outline" className="rounded-full text-xs bg-secondary">
+                    Web
+                  </Badge>
+                )}
+              </div>
               <p className="text-muted-foreground mt-0.5">{job.company}</p>
             </div>
             <span className="text-sm text-muted-foreground shrink-0">{postedAt}</span>
