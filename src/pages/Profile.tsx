@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Save, Plus, X } from "lucide-react";
+import { CountryCombobox } from "@/components/ui/country-combobox";
 
 interface ProfileData {
   name: string;
@@ -185,13 +186,13 @@ export default function Profile() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="location">Preferred Location</Label>
-                <Input
-                  id="location"
-                  placeholder="e.g., Remote, New York"
-                  value={profile.location}
-                  onChange={(e) => setProfile((p) => ({ ...p, location: e.target.value }))}
-                  className="mt-1.5 bg-secondary border-0"
-                />
+                <div className="mt-1.5">
+                  <CountryCombobox
+                    value={profile.location}
+                    onChange={(location) => setProfile((p) => ({ ...p, location }))}
+                    placeholder="Select your preferred country..."
+                  />
+                </div>
               </div>
               <div>
                 <Label htmlFor="work_type">Work Type</Label>
