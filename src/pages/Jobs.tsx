@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const initialFilters: JobFiltersState = {
   search: "",
   jobType: "all",
-  location: "all",
+  location: [],
   workMode: "all",
   salaryMin: "all",
   datePosted: "all",
