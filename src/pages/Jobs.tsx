@@ -2,15 +2,18 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { JobFilters, JobFiltersState } from "@/components/jobs/JobFilters";
+import { JobGridCard } from "@/components/jobs/JobGridCard";
 import { JobListCard, JobData } from "@/components/jobs/JobListCard";
 import { JobDetailDrawer } from "@/components/jobs/JobDetailDrawer";
+import { ActiveFiltersBar, ActiveFilter } from "@/components/jobs/ActiveFiltersBar";
 import { useAuth } from "@/hooks/useAuth";
-import { useExternalJobs } from "@/hooks/useExternalJobs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Globe } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { LayoutGrid, List, Sparkles, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
+import { differenceInDays, differenceInHours } from "date-fns";
 
 const initialFilters: JobFiltersState = {
   search: "",
@@ -21,19 +24,18 @@ const initialFilters: JobFiltersState = {
   datePosted: [],
 };
 
+type ViewMode = "grid" | "list";
+
 export default function Jobs() {
-  const [dbJobs, setDbJobs] = useState<JobData[]>([]);
+  const [jobs, setJobs] = useState<JobData[]>([]);
   const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<JobFiltersState>(initialFilters);
   const [selectedJob, setSelectedJob] = useState<JobData | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { externalJobs, loading: externalLoading, fetchExternalJobs } = useExternalJobs();
-
-  // Combine jobs (show web results first so they're immediately visible)
-  const jobs = [...externalJobs, ...dbJobs];
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -43,24 +45,24 @@ export default function Jobs() {
 
   useEffect(() => {
     if (user) {
-      fetchDbJobs();
+      fetchJobs();
       fetchSavedJobs();
-      // Auto-fetch external jobs on initial load
-      fetchExternalJobs({ query: "software engineer internship" });
     }
   }, [user]);
 
-  const fetchDbJobs = async () => {
+  const fetchJobs = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("jobs")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("freshness_rank", { ascending: false })
+      .order("overall_rank_score", { ascending: false })
+      .limit(100);
 
     if (error) {
       toast({ title: "Error loading jobs", description: error.message, variant: "destructive" });
     } else {
-      setDbJobs((data as JobData[]) || []);
+      setJobs((data as JobData[]) || []);
     }
     setLoading(false);
   };
@@ -132,7 +134,84 @@ export default function Jobs() {
     setFilters(initialFilters);
   };
 
-  // Apply filters with defensive guards for array types
+  // Build active filters for the bar
+  const buildActiveFilters = (): ActiveFilter[] => {
+    const activeFilters: ActiveFilter[] = [];
+    const filterColors: Record<string, string> = {
+      search: "bg-purple/15 text-purple border-purple/30",
+      jobType: "bg-orange/15 text-orange border-orange/30",
+      location: "bg-teal/15 text-teal border-teal/30",
+      workMode: "bg-blue/15 text-blue border-blue/30",
+      salaryMin: "bg-green/15 text-green border-green/30",
+      datePosted: "bg-pink/15 text-pink border-pink/30",
+    };
+
+    if (filters.search) {
+      activeFilters.push({
+        key: "search",
+        value: filters.search,
+        label: `"${filters.search}"`,
+        color: filterColors.search,
+      });
+    }
+
+    filters.jobType.forEach((v) => {
+      activeFilters.push({
+        key: "jobType",
+        value: v,
+        label: v.charAt(0).toUpperCase() + v.slice(1),
+        color: filterColors.jobType,
+      });
+    });
+
+    filters.location.forEach((v) => {
+      activeFilters.push({
+        key: "location",
+        value: v,
+        label: v,
+        color: filterColors.location,
+      });
+    });
+
+    filters.workMode.forEach((v) => {
+      activeFilters.push({
+        key: "workMode",
+        value: v,
+        label: v.charAt(0).toUpperCase() + v.slice(1),
+        color: filterColors.workMode,
+      });
+    });
+
+    filters.datePosted.forEach((v) => {
+      const labels: Record<string, string> = {
+        "24h": "Past 24 hours",
+        "3d": "Past 3 days",
+        "7d": "Past week",
+        "30d": "Past month",
+      };
+      activeFilters.push({
+        key: "datePosted",
+        value: v,
+        label: labels[v] || v,
+        color: filterColors.datePosted,
+      });
+    });
+
+    return activeFilters;
+  };
+
+  const handleRemoveFilter = (key: string, value: string) => {
+    if (key === "search") {
+      setFilters((prev) => ({ ...prev, search: "" }));
+    } else {
+      setFilters((prev) => ({
+        ...prev,
+        [key]: (prev[key as keyof JobFiltersState] as string[]).filter((v) => v !== value),
+      }));
+    }
+  };
+
+  // Apply filters
   const filteredJobs = jobs.filter((job) => {
     // Search filter
     if (filters.search) {
@@ -144,7 +223,7 @@ export default function Jobs() {
       if (!matchesSearch) return false;
     }
 
-    // Job type filter (multi-select) - ensure array
+    // Job type filter
     const jobTypeFilters = Array.isArray(filters.jobType) ? filters.jobType : [];
     if (jobTypeFilters.length > 0) {
       const jobWorkType = job.work_type.toLowerCase().replace("-", "").replace(" ", "");
@@ -155,7 +234,7 @@ export default function Jobs() {
       if (!matches) return false;
     }
 
-    // Work mode filter (multi-select) - ensure array
+    // Work mode filter
     const workModeFilters = Array.isArray(filters.workMode) ? filters.workMode : [];
     if (workModeFilters.length > 0) {
       const jobWorkType = job.work_type.toLowerCase();
@@ -163,14 +242,32 @@ export default function Jobs() {
       if (!matches) return false;
     }
 
-    // Salary filter (multi-select) - ensure array
+    // Salary filter
     const salaryFilters = Array.isArray(filters.salaryMin) ? filters.salaryMin : [];
     if (salaryFilters.length > 0 && job.salary_min) {
       const minRequired = Math.min(...salaryFilters.map((s) => parseInt(s)));
       if (job.salary_min < minRequired) return false;
     }
 
-    // Location filter (multi-select) - ensure array
+    // Date posted filter
+    const dateFilters = Array.isArray(filters.datePosted) ? filters.datePosted : [];
+    if (dateFilters.length > 0) {
+      const postedDate = job.posted_date ? new Date(job.posted_date) : new Date(job.created_at);
+      const now = new Date();
+      const hoursAgo = differenceInHours(now, postedDate);
+      const daysAgo = differenceInDays(now, postedDate);
+
+      const matches = dateFilters.some((d) => {
+        if (d === "24h") return hoursAgo <= 24;
+        if (d === "3d") return daysAgo <= 3;
+        if (d === "7d") return daysAgo <= 7;
+        if (d === "30d") return daysAgo <= 30;
+        return true;
+      });
+      if (!matches) return false;
+    }
+
+    // Location filter
     const locationFilters = Array.isArray(filters.location) ? filters.location : [];
     if (locationFilters.length > 0) {
       const jobLocation = job.location.toLowerCase();
@@ -184,6 +281,14 @@ export default function Jobs() {
     return true;
   });
 
+  // Stats for header
+  const freshJobsCount = jobs.filter((j) => {
+    const postedDate = j.posted_date ? new Date(j.posted_date) : new Date(j.created_at);
+    return differenceInHours(new Date(), postedDate) <= 24;
+  }).length;
+
+  const verifiedJobsCount = jobs.filter((j) => (j as any).verification_status === "verified_active").length;
+
   if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -192,41 +297,33 @@ export default function Jobs() {
     );
   }
 
-  const handleRefreshExternalJobs = () => {
-    const searchQuery = filters.search || "software engineer internship";
-    const locationQuery = Array.isArray(filters.location) ? filters.location.join(" ") : "";
-    fetchExternalJobs({ query: searchQuery, location: locationQuery });
-  };
-
-  const filteredWebJobsCount = filteredJobs.filter((j) => j.source === "external").length;
-
-  const isLoading = loading || externalLoading;
-
   return (
     <DashboardLayout>
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Browse Jobs</h1>
+            <h1 className="text-3xl font-bold text-foreground">Internships & Jobs</h1>
             <p className="text-muted-foreground mt-1">
-              {isLoading ? "Searching for jobs..." : `Found ${filteredJobs.length} jobs from multiple sources`}
-              {!isLoading && (
-                <span className="block text-xs text-muted-foreground mt-1">
-                  {filteredWebJobsCount} from the web • {filteredJobs.length - filteredWebJobsCount} from your database
-                </span>
-              )}
+              {loading ? "Loading..." : `${filteredJobs.length} opportunities from top companies`}
             </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={handleRefreshExternalJobs}
-            disabled={externalLoading}
-            className="rounded-xl gap-2"
-          >
-            <Globe className={`h-4 w-4 text-blue ${externalLoading ? "animate-spin" : ""}`} />
-            {externalLoading ? "Searching..." : "Search Web"}
-          </Button>
+
+          {/* Stats badges */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="gap-1.5 rounded-full px-3 py-1.5 bg-green/10 text-green border-green/30">
+              <Sparkles className="h-3.5 w-3.5" />
+              {freshJobsCount} new today
+            </Badge>
+            <Badge variant="outline" className="gap-1.5 rounded-full px-3 py-1.5 bg-blue/10 text-blue border-blue/30">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {verifiedJobsCount} verified
+            </Badge>
+            <Badge variant="outline" className="gap-1.5 rounded-full px-3 py-1.5 bg-orange/10 text-orange border-orange/30">
+              <TrendingUp className="h-3.5 w-3.5" />
+              {jobs.length} total
+            </Badge>
+          </div>
         </div>
 
         {/* Filters */}
@@ -236,31 +333,85 @@ export default function Jobs() {
           onClearFilters={handleClearFilters}
         />
 
-        {/* Job List */}
-        <div className="space-y-4">
-          {isLoading ? (
-            Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="apple-card p-5">
-                <div className="flex gap-4">
+        {/* Active filters bar */}
+        <ActiveFiltersBar
+          filters={buildActiveFilters()}
+          onRemoveFilter={handleRemoveFilter}
+          onClearAll={handleClearFilters}
+        />
+
+        {/* View toggle */}
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {filteredJobs.length} of {jobs.length} jobs
+          </p>
+          <div className="flex items-center gap-1 p-1 bg-secondary rounded-lg">
+            <Button
+              variant={viewMode === "grid" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              className="rounded-md h-8 px-3"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+              className="rounded-md h-8 px-3"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Job Grid/List */}
+        {loading ? (
+          <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
+            {Array.from({ length: 9 }).map((_, i) => (
+              <div key={i} className="bg-card border border-border rounded-2xl p-5">
+                <div className="flex items-start justify-between mb-4">
                   <Skeleton className="w-14 h-14 rounded-xl" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-6 w-2/3" />
-                    <Skeleton className="h-4 w-1/3" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </div>
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-1/2 mb-1" />
+                <Skeleton className="h-4 w-2/3 mb-4" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-6 w-16 rounded-full" />
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                  <Skeleton className="h-6 w-14 rounded-full" />
                 </div>
               </div>
-            ))
-          ) : filteredJobs.length === 0 ? (
-            <div className="text-center py-12">
-              <Globe className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground mb-4">No jobs found matching your criteria.</p>
-              <Button onClick={handleRefreshExternalJobs} variant="outline" className="rounded-xl">
-                Search for more jobs
-              </Button>
-            </div>
-          ) : (
-            filteredJobs.map((job) => (
+            ))}
+          </div>
+        ) : filteredJobs.length === 0 ? (
+          <div className="text-center py-16 bg-card border border-border rounded-2xl">
+            <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No jobs found</h3>
+            <p className="text-muted-foreground mb-4">Try adjusting your filters or search terms</p>
+            <Button onClick={handleClearFilters} variant="outline" className="rounded-full">
+              Clear all filters
+            </Button>
+          </div>
+        ) : viewMode === "grid" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredJobs.map((job) => (
+              <JobGridCard
+                key={job.id}
+                job={job}
+                isSaved={savedJobs.has(job.id)}
+                onSave={handleSaveJob}
+                onClick={() => {
+                  setSelectedJob(job);
+                  setDrawerOpen(true);
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredJobs.map((job) => (
               <JobListCard
                 key={job.id}
                 job={job}
@@ -273,9 +424,9 @@ export default function Jobs() {
                   setDrawerOpen(true);
                 }}
               />
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Job Detail Drawer */}
