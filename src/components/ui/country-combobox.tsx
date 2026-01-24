@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Check, ChevronsUpDown, Globe } from "lucide-react";
+import { Check, ChevronsUpDown, Globe, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 
 const countries = [
   { value: "remote", label: "Remote (Anywhere)" },
@@ -217,22 +218,137 @@ const countries = [
   { value: "zimbabwe", label: "Zimbabwe" },
 ];
 
-interface CountryComboboxProps {
+// Single select props
+interface SingleSelectProps {
   value: string;
   onChange: (value: string) => void;
+  multiSelect?: false;
   placeholder?: string;
   className?: string;
 }
 
-export function CountryCombobox({
-  value,
-  onChange,
-  placeholder = "Select country...",
-  className,
-}: CountryComboboxProps) {
-  const [open, setOpen] = React.useState(false);
+// Multi select props
+interface MultiSelectProps {
+  value: string[];
+  onChange: (value: string[]) => void;
+  multiSelect: true;
+  placeholder?: string;
+  className?: string;
+}
 
-  // Find by label (display value) or value
+type CountryComboboxProps = SingleSelectProps | MultiSelectProps;
+
+export function CountryCombobox(props: CountryComboboxProps) {
+  const [open, setOpen] = React.useState(false);
+  const { placeholder = "Select country...", className, multiSelect } = props;
+
+  if (multiSelect) {
+    const { value, onChange } = props as MultiSelectProps;
+    
+    const selectedCountries = countries.filter((country) =>
+      value.some(
+        (v) =>
+          country.label.toLowerCase() === v.toLowerCase() ||
+          country.value === v.toLowerCase()
+      )
+    );
+
+    const toggleCountry = (countryLabel: string) => {
+      const isSelected = value.some(
+        (v) => v.toLowerCase() === countryLabel.toLowerCase()
+      );
+      if (isSelected) {
+        onChange(value.filter((v) => v.toLowerCase() !== countryLabel.toLowerCase()));
+      } else {
+        onChange([...value, countryLabel]);
+      }
+    };
+
+    const removeCountry = (countryLabel: string) => {
+      onChange(value.filter((v) => v.toLowerCase() !== countryLabel.toLowerCase()));
+    };
+
+    return (
+      <div className="space-y-2">
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className={cn(
+                "w-full justify-between bg-secondary border-0 text-left font-normal",
+                selectedCountries.length === 0 && "text-muted-foreground",
+                className
+              )}
+            >
+              <span className="flex items-center gap-2 truncate">
+                <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
+                {selectedCountries.length === 0
+                  ? placeholder
+                  : `${selectedCountries.length} ${selectedCountries.length === 1 ? "country" : "countries"} selected`}
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-popover z-50" align="start">
+            <Command>
+              <CommandInput placeholder="Search country..." />
+              <CommandList>
+                <CommandEmpty>No country found.</CommandEmpty>
+                <CommandGroup>
+                  {countries.map((country) => {
+                    const isSelected = selectedCountries.some(
+                      (c) => c.value === country.value
+                    );
+                    return (
+                      <CommandItem
+                        key={country.value}
+                        value={country.label}
+                        onSelect={() => toggleCountry(country.label)}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            isSelected ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {country.label}
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        
+        {selectedCountries.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {selectedCountries.map((country) => (
+              <Badge
+                key={country.value}
+                variant="secondary"
+                className="rounded-full px-2.5 py-0.5 text-xs gap-1"
+              >
+                {country.label}
+                <button
+                  onClick={() => removeCountry(country.label)}
+                  className="ml-0.5 hover:text-destructive"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Single select mode
+  const { value, onChange } = props as SingleSelectProps;
+  
   const selectedCountry = countries.find(
     (country) =>
       country.label.toLowerCase() === value.toLowerCase() ||

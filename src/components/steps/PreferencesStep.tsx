@@ -1,15 +1,17 @@
-import { MapPin, DollarSign, Clock } from "lucide-react";
+import { MapPin, DollarSign, Clock, Briefcase } from "lucide-react";
 import { Label } from "../ui/label";
 import { cn } from "@/lib/utils";
 import { CountryCombobox } from "../ui/country-combobox";
+import { InterestsCombobox } from "../ui/interests-combobox";
 
 interface PreferencesStepProps {
   data: {
-    location: string;
+    locations: string[];
+    interests: string[];
     salary: string;
     workType: string;
   };
-  onChange: (data: { location: string; salary: string; workType: string }) => void;
+  onChange: (data: { locations: string[]; interests: string[]; salary: string; workType: string }) => void;
 }
 
 const salaries = ["$50K-80K", "$80K-120K", "$120K-150K", "$150K+"];
@@ -34,12 +36,25 @@ export const PreferencesStep = ({ data, onChange }: PreferencesStepProps) => {
         <div className="space-y-3">
           <Label className="flex items-center gap-2 text-foreground">
             <MapPin className="w-4 h-4 text-primary" />
-            Preferred Location
+            Preferred Locations
           </Label>
           <CountryCombobox
-            value={data.location}
-            onChange={(location) => onChange({ ...data, location })}
-            placeholder="Select your preferred country..."
+            value={data.locations}
+            onChange={(locations) => onChange({ ...data, locations })}
+            placeholder="Select your preferred countries..."
+            multiSelect
+          />
+        </div>
+
+        <div className="space-y-3">
+          <Label className="flex items-center gap-2 text-foreground">
+            <Briefcase className="w-4 h-4 text-primary" />
+            Job Interests
+          </Label>
+          <InterestsCombobox
+            value={data.interests}
+            onChange={(interests) => onChange({ ...data, interests })}
+            placeholder="Select your interests..."
           />
         </div>
         

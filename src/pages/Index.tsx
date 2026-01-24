@@ -44,7 +44,8 @@ const Index = () => {
     name: string;
     email: string;
     title: string;
-    location: string;
+    locations: string[];
+    interests: string[];
     salaryRange: string;
     workType: string;
     skills: string[];
@@ -57,7 +58,7 @@ const Index = () => {
         name: userData.name,
         email: userData.email,
         title: userData.title,
-        location: userData.location,
+        location: userData.locations.join(', '),
         salary_range: userData.salaryRange,
         work_type: userData.workType,
         skills: userData.skills,
