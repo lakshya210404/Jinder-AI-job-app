@@ -120,7 +120,7 @@ export default function Jobs() {
     setFilters(initialFilters);
   };
 
-  // Apply filters
+  // Apply filters with defensive guards for array types
   const filteredJobs = jobs.filter((job) => {
     // Search filter
     if (filters.search) {
@@ -132,33 +132,37 @@ export default function Jobs() {
       if (!matchesSearch) return false;
     }
 
-    // Job type filter (multi-select)
-    if (filters.jobType.length > 0) {
+    // Job type filter (multi-select) - ensure array
+    const jobTypeFilters = Array.isArray(filters.jobType) ? filters.jobType : [];
+    if (jobTypeFilters.length > 0) {
       const jobWorkType = job.work_type.toLowerCase().replace("-", "").replace(" ", "");
-      const matches = filters.jobType.some((t) => {
+      const matches = jobTypeFilters.some((t) => {
         const filterType = t.toLowerCase().replace("-", "").replace(" ", "");
         return jobWorkType.includes(filterType) || filterType.includes(jobWorkType);
       });
       if (!matches) return false;
     }
 
-    // Work mode filter (multi-select)
-    if (filters.workMode.length > 0) {
+    // Work mode filter (multi-select) - ensure array
+    const workModeFilters = Array.isArray(filters.workMode) ? filters.workMode : [];
+    if (workModeFilters.length > 0) {
       const jobWorkType = job.work_type.toLowerCase();
-      const matches = filters.workMode.some((m) => jobWorkType.includes(m.toLowerCase()));
+      const matches = workModeFilters.some((m) => jobWorkType.includes(m.toLowerCase()));
       if (!matches) return false;
     }
 
-    // Salary filter (multi-select - show if meets ANY selected minimum)
-    if (filters.salaryMin.length > 0 && job.salary_min) {
-      const minRequired = Math.min(...filters.salaryMin.map((s) => parseInt(s)));
+    // Salary filter (multi-select) - ensure array
+    const salaryFilters = Array.isArray(filters.salaryMin) ? filters.salaryMin : [];
+    if (salaryFilters.length > 0 && job.salary_min) {
+      const minRequired = Math.min(...salaryFilters.map((s) => parseInt(s)));
       if (job.salary_min < minRequired) return false;
     }
 
-    // Location filter (multi-select)
-    if (filters.location.length > 0) {
+    // Location filter (multi-select) - ensure array
+    const locationFilters = Array.isArray(filters.location) ? filters.location : [];
+    if (locationFilters.length > 0) {
       const jobLocation = job.location.toLowerCase();
-      const matches = filters.location.some((loc) => {
+      const matches = locationFilters.some((loc) => {
         const locLower = loc.toLowerCase();
         return jobLocation.includes(locLower) || locLower.includes(jobLocation);
       });
