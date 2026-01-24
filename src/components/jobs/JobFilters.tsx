@@ -2,18 +2,13 @@ import { Search, X, MapPin, Clock, DollarSign, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { CountryCombobox } from "@/components/ui/country-combobox";
+import { CheckboxSelect } from "@/components/ui/checkbox-select";
 
 export interface JobFiltersState {
   search: string;
   jobType: string;
-  location: string;
+  location: string[];
   workMode: string;
   salaryMin: string;
   datePosted: string;
@@ -31,15 +26,6 @@ const jobTypes = [
   { value: "part-time", label: "Part-time" },
   { value: "internship", label: "Internship" },
   { value: "contract", label: "Contract" },
-];
-
-const locations = [
-  { value: "all", label: "All Locations" },
-  { value: "remote", label: "Remote" },
-  { value: "usa", label: "United States" },
-  { value: "canada", label: "Canada" },
-  { value: "uk", label: "United Kingdom" },
-  { value: "europe", label: "Europe" },
 ];
 
 const workModes = [
@@ -66,16 +52,35 @@ const datePostedOptions = [
 ];
 
 export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFiltersProps) {
-  const updateFilter = (key: keyof JobFiltersState, value: string) => {
-    onFiltersChange({ ...filters, [key]: value });
+  const updateFilter = (
+    key: keyof JobFiltersState,
+    value: JobFiltersState[keyof JobFiltersState]
+  ) => {
+    onFiltersChange({ ...filters, [key]: value } as JobFiltersState);
   };
 
-  const activeFiltersCount = Object.entries(filters).filter(
-    ([key, value]) => value && value !== "all" && value !== ""
-  ).length;
+  const isActive = (key: string, value: unknown) => {
+    if (Array.isArray(value)) return value.length > 0;
+    return Boolean(value) && value !== "all";
+  };
+
+  const activeFiltersCount = Object.entries(filters).filter(([k, v]) => isActive(k, v)).length;
+
+  const labelFor = (key: string, value: unknown) => {
+    if (key === "location" && Array.isArray(value)) {
+      if (value.length === 1) return value[0];
+      return `${value.length} locations selected`;
+    }
+    if (typeof value !== "string") return "";
+    if (key === "jobType") return jobTypes.find((o) => o.value === value)?.label ?? value;
+    if (key === "workMode") return workModes.find((o) => o.value === value)?.label ?? value;
+    if (key === "salaryMin") return salaryRanges.find((o) => o.value === value)?.label ?? value;
+    if (key === "datePosted") return datePostedOptions.find((o) => o.value === value)?.label ?? value;
+    return value;
+  };
 
   const activeFilters = Object.entries(filters)
-    .filter(([key, value]) => value && value !== "all" && value !== "")
+    .filter(([k, v]) => isActive(k, v))
     .map(([key, value]) => ({ key, value }));
 
   return (
@@ -93,74 +98,54 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
 
       {/* Filter Row */}
       <div className="flex flex-wrap gap-3">
-        <Select value={filters.jobType} onValueChange={(value) => updateFilter("jobType", value)}>
-          <SelectTrigger className="w-[140px] h-10 rounded-xl bg-secondary border-0">
-            <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-            <SelectValue placeholder="Job Type" />
-          </SelectTrigger>
-          <SelectContent>
-            {jobTypes.map((type) => (
-              <SelectItem key={type.value} value={type.value}>
-                {type.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <CheckboxSelect
+          value={filters.jobType}
+          onChange={(value) => updateFilter("jobType", value)}
+          options={jobTypes}
+          placeholder="Job Type"
+          searchPlaceholder="Search job types..."
+          icon={<Clock className="h-4 w-4 text-muted-foreground" />}
+          className="w-[150px]"
+        />
 
-        <Select value={filters.location} onValueChange={(value) => updateFilter("location", value)}>
-          <SelectTrigger className="w-[160px] h-10 rounded-xl bg-secondary border-0">
-            <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-            <SelectValue placeholder="Location" />
-          </SelectTrigger>
-          <SelectContent>
-            {locations.map((loc) => (
-              <SelectItem key={loc.value} value={loc.value}>
-                {loc.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="w-[220px]">
+          <CountryCombobox
+            value={filters.location}
+            onChange={(value) => updateFilter("location", value)}
+            placeholder="Select locations..."
+            multiSelect
+          />
+        </div>
 
-        <Select value={filters.workMode} onValueChange={(value) => updateFilter("workMode", value)}>
-          <SelectTrigger className="w-[140px] h-10 rounded-xl bg-secondary border-0">
-            <SelectValue placeholder="Work Mode" />
-          </SelectTrigger>
-          <SelectContent>
-            {workModes.map((mode) => (
-              <SelectItem key={mode.value} value={mode.value}>
-                {mode.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <CheckboxSelect
+          value={filters.workMode}
+          onChange={(value) => updateFilter("workMode", value)}
+          options={workModes}
+          placeholder="Work modality"
+          searchPlaceholder="Search modalities..."
+          icon={<MapPin className="h-4 w-4 text-muted-foreground" />}
+          className="w-[170px]"
+        />
 
-        <Select value={filters.salaryMin} onValueChange={(value) => updateFilter("salaryMin", value)}>
-          <SelectTrigger className="w-[130px] h-10 rounded-xl bg-secondary border-0">
-            <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
-            <SelectValue placeholder="Salary" />
-          </SelectTrigger>
-          <SelectContent>
-            {salaryRanges.map((range) => (
-              <SelectItem key={range.value} value={range.value}>
-                {range.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <CheckboxSelect
+          value={filters.salaryMin}
+          onChange={(value) => updateFilter("salaryMin", value)}
+          options={salaryRanges}
+          placeholder="Salary"
+          searchPlaceholder="Search salary..."
+          icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
+          className="w-[140px]"
+        />
 
-        <Select value={filters.datePosted} onValueChange={(value) => updateFilter("datePosted", value)}>
-          <SelectTrigger className="w-[140px] h-10 rounded-xl bg-secondary border-0">
-            <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-            <SelectValue placeholder="Date" />
-          </SelectTrigger>
-          <SelectContent>
-            {datePostedOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <CheckboxSelect
+          value={filters.datePosted}
+          onChange={(value) => updateFilter("datePosted", value)}
+          options={datePostedOptions}
+          placeholder="Date"
+          searchPlaceholder="Search dates..."
+          icon={<Calendar className="h-4 w-4 text-muted-foreground" />}
+          className="w-[150px]"
+        />
       </div>
 
       {/* Active Filters */}
@@ -173,9 +158,15 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
               variant="secondary"
               className="rounded-full px-3 py-1 gap-1"
             >
-              {value}
+                {labelFor(key, value)}
               <button
-                onClick={() => updateFilter(key as keyof JobFiltersState, key === "search" ? "" : "all")}
+                  onClick={() => {
+                    if (key === "location") {
+                      updateFilter("location", []);
+                      return;
+                    }
+                    updateFilter(key as keyof JobFiltersState, key === "search" ? "" : "all");
+                  }}
                 className="ml-1 hover:text-destructive"
               >
                 <X className="h-3 w-3" />
