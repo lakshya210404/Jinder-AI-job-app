@@ -1,10 +1,13 @@
-import { X, MapPin, Briefcase, DollarSign, Calendar, Building2, ExternalLink, Bookmark, BookmarkCheck, Sparkles } from "lucide-react";
+import { useEffect } from "react";
+import { X, MapPin, Briefcase, DollarSign, Calendar, Building2, ExternalLink, Bookmark, BookmarkCheck, Sparkles, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
+import { useScrapeJob } from "@/hooks/useScrapeJob";
 import type { JobData } from "./JobListCard";
 
 interface JobDetailDrawerProps {
@@ -26,6 +29,17 @@ export function JobDetailDrawer({
   onApply,
   onGenerateResume,
 }: JobDetailDrawerProps) {
+  const { scrapeJob, loading: scraping, error: scrapeError, result: scrapeResult, reset: resetScrape } = useScrapeJob();
+
+  // Scrape job details when drawer opens for external jobs
+  useEffect(() => {
+    if (open && job?.source === "external" && job?.apply_url) {
+      scrapeJob(job.apply_url);
+    } else if (!open) {
+      resetScrape();
+    }
+  }, [open, job?.id, job?.source, job?.apply_url, scrapeJob, resetScrape]);
+
   if (!job) return null;
 
   const formatSalary = (min: number | null, max: number | null) => {
@@ -51,6 +65,60 @@ export function JobDetailDrawer({
     return colors[index % colors.length];
   };
 
+  // Determine which description to show
+  const isExternalJob = job.source === "external";
+  const hasScrapedContent = scrapeResult?.content && scrapeResult.content.length > 50;
+  const displayDescription = hasScrapedContent ? scrapeResult.content : job.description;
+
+  // Simple markdown-to-text rendering (basic formatting)
+  const renderDescription = (text: string) => {
+    // Split by double newlines for paragraphs, handle markdown headers
+    const sections = text.split(/\n{2,}/);
+    return sections.map((section, index) => {
+      // Handle headers
+      if (section.startsWith('# ')) {
+        return (
+          <h2 key={index} className="text-lg font-semibold text-foreground mt-4 mb-2">
+            {section.replace(/^#+ /, '')}
+          </h2>
+        );
+      }
+      if (section.startsWith('## ')) {
+        return (
+          <h3 key={index} className="text-base font-semibold text-foreground mt-3 mb-2">
+            {section.replace(/^#+ /, '')}
+          </h3>
+        );
+      }
+      if (section.startsWith('### ')) {
+        return (
+          <h4 key={index} className="text-sm font-semibold text-foreground mt-2 mb-1">
+            {section.replace(/^#+ /, '')}
+          </h4>
+        );
+      }
+      // Handle bullet points
+      if (section.includes('\n- ') || section.startsWith('- ')) {
+        const items = section.split('\n').filter(line => line.trim());
+        return (
+          <ul key={index} className="list-disc list-inside space-y-1 mb-3">
+            {items.map((item, i) => (
+              <li key={i} className="text-sm">
+                {item.replace(/^[-*] /, '')}
+              </li>
+            ))}
+          </ul>
+        );
+      }
+      // Regular paragraph
+      return (
+        <p key={index} className="mb-3 last:mb-0 text-sm leading-relaxed">
+          {section}
+        </p>
+      );
+    });
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col">
@@ -71,6 +139,11 @@ export function JobDetailDrawer({
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Building2 className="h-4 w-4 text-purple" />
                 <span>{job.company}</span>
+                {isExternalJob && (
+                  <Badge variant="outline" className="rounded-full text-xs bg-secondary ml-1">
+                    Web
+                  </Badge>
+                )}
               </div>
               <SheetTitle className="text-xl font-semibold text-foreground leading-tight">
                 {job.title}
@@ -179,24 +252,57 @@ export function JobDetailDrawer({
 
             {/* Description */}
             <div>
-              <h3 className="text-sm font-semibold text-foreground mb-3">Job Description</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-foreground">Job Description</h3>
+                {isExternalJob && scraping && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>Loading full details...</span>
+                  </div>
+                )}
+                {isExternalJob && hasScrapedContent && (
+                  <Badge variant="secondary" className="text-xs rounded-full">
+                    Full details loaded
+                  </Badge>
+                )}
+              </div>
+
+              {/* Loading skeleton for external jobs */}
+              {isExternalJob && scraping && !hasScrapedContent && (
+                <div className="space-y-3 mb-4">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                  <Skeleton className="h-4 w-4/5" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              )}
+
+              {/* Error state */}
+              {isExternalJob && scrapeError && !hasScrapedContent && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>Couldn't load full details. Showing preview instead.</span>
+                </div>
+              )}
+
+              {/* Description content */}
               <div className="prose prose-sm max-w-none text-muted-foreground">
-                {job.description.split('\n').map((paragraph, index) => (
-                  <p key={index} className="mb-3 last:mb-0">
-                    {paragraph}
-                  </p>
-                ))}
+                {renderDescription(displayDescription)}
               </div>
             </div>
 
             {/* Source */}
-            {job.source && (
-              <div className="pt-4">
+            <div className="pt-4 flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                Source: {isExternalJob ? 'Web Search' : 'Database'}
+              </p>
+              {scrapeResult?.cached && (
                 <p className="text-xs text-muted-foreground">
-                  Source: {job.source === 'external' ? 'Web Search' : 'Database'}
+                  Cached
                 </p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </ScrollArea>
       </SheetContent>
