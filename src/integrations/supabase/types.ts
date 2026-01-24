@@ -140,6 +140,68 @@ export type Database = {
         }
         Relationships: []
       }
+      ingestion_logs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          duration_ms: number | null
+          error_details: Json | null
+          error_message: string | null
+          id: string
+          jobs_deduplicated: number | null
+          jobs_expired: number | null
+          jobs_fetched: number | null
+          jobs_new: number | null
+          jobs_updated: number | null
+          raw_response_sample: Json | null
+          source_id: string | null
+          started_at: string
+          success: boolean | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_details?: Json | null
+          error_message?: string | null
+          id?: string
+          jobs_deduplicated?: number | null
+          jobs_expired?: number | null
+          jobs_fetched?: number | null
+          jobs_new?: number | null
+          jobs_updated?: number | null
+          raw_response_sample?: Json | null
+          source_id?: string | null
+          started_at?: string
+          success?: boolean | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_details?: Json | null
+          error_message?: string | null
+          id?: string
+          jobs_deduplicated?: number | null
+          jobs_expired?: number | null
+          jobs_fetched?: number | null
+          jobs_new?: number | null
+          jobs_updated?: number | null
+          raw_response_sample?: Json | null
+          source_id?: string | null
+          started_at?: string
+          success?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingestion_logs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "job_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_match_scores: {
         Row: {
           computed_at: string
@@ -199,59 +261,264 @@ export type Database = {
           },
         ]
       }
+      job_sources: {
+        Row: {
+          active_job_count: number | null
+          api_endpoint: string | null
+          base_url: string
+          company_name: string
+          company_slug: string | null
+          consecutive_failures: number | null
+          created_at: string
+          id: string
+          is_priority_source: boolean | null
+          last_error_message: string | null
+          last_failure_at: string | null
+          last_poll_at: string | null
+          last_success_at: string | null
+          logo_url: string | null
+          name: string
+          next_poll_at: string | null
+          poll_interval_minutes: number
+          reliability_score: number | null
+          source_type: Database["public"]["Enums"]["job_source_type"]
+          status: Database["public"]["Enums"]["source_status"]
+          tags: string[] | null
+          total_jobs_ingested: number | null
+          updated_at: string
+        }
+        Insert: {
+          active_job_count?: number | null
+          api_endpoint?: string | null
+          base_url: string
+          company_name: string
+          company_slug?: string | null
+          consecutive_failures?: number | null
+          created_at?: string
+          id?: string
+          is_priority_source?: boolean | null
+          last_error_message?: string | null
+          last_failure_at?: string | null
+          last_poll_at?: string | null
+          last_success_at?: string | null
+          logo_url?: string | null
+          name: string
+          next_poll_at?: string | null
+          poll_interval_minutes?: number
+          reliability_score?: number | null
+          source_type: Database["public"]["Enums"]["job_source_type"]
+          status?: Database["public"]["Enums"]["source_status"]
+          tags?: string[] | null
+          total_jobs_ingested?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active_job_count?: number | null
+          api_endpoint?: string | null
+          base_url?: string
+          company_name?: string
+          company_slug?: string | null
+          consecutive_failures?: number | null
+          created_at?: string
+          id?: string
+          is_priority_source?: boolean | null
+          last_error_message?: string | null
+          last_failure_at?: string | null
+          last_poll_at?: string | null
+          last_success_at?: string | null
+          logo_url?: string | null
+          name?: string
+          next_poll_at?: string | null
+          poll_interval_minutes?: number
+          reliability_score?: number | null
+          source_type?: Database["public"]["Enums"]["job_source_type"]
+          status?: Database["public"]["Enums"]["source_status"]
+          tags?: string[] | null
+          total_jobs_ingested?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      job_verifications: {
+        Row: {
+          apply_button_found: boolean | null
+          created_at: string
+          http_status: number | null
+          id: string
+          is_accessible: boolean | null
+          job_closed_signal: boolean | null
+          job_id: string
+          notes: string | null
+          page_title: string | null
+          redirect_detected: boolean | null
+          redirect_url: string | null
+          verified_at: string
+        }
+        Insert: {
+          apply_button_found?: boolean | null
+          created_at?: string
+          http_status?: number | null
+          id?: string
+          is_accessible?: boolean | null
+          job_closed_signal?: boolean | null
+          job_id: string
+          notes?: string | null
+          page_title?: string | null
+          redirect_detected?: boolean | null
+          redirect_url?: string | null
+          verified_at?: string
+        }
+        Update: {
+          apply_button_found?: boolean | null
+          created_at?: string
+          http_status?: number | null
+          id?: string
+          is_accessible?: boolean | null
+          job_closed_signal?: boolean | null
+          job_id?: string
+          notes?: string | null
+          page_title?: string | null
+          redirect_detected?: boolean | null
+          redirect_url?: string | null
+          verified_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_verifications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
+          ai_classification_at: string | null
+          ai_classification_done: boolean | null
           apply_url: string | null
           company: string
+          competition_score: number | null
           created_at: string
           description: string
+          education_requirements: string | null
+          experience_level_parsed: string | null
+          external_job_id: string | null
+          first_seen_at: string | null
+          freshness_rank: number | null
+          hiring_urgency_score: number | null
           id: string
+          is_remote: boolean | null
+          job_hash: string | null
+          last_verified_at: string | null
           location: string
           logo_url: string | null
+          overall_rank_score: number | null
           posted_date: string | null
           requirements: string[] | null
+          role_type: Database["public"]["Enums"]["role_type"] | null
+          salary_currency: string | null
           salary_max: number | null
           salary_min: number | null
           source: string | null
+          source_id: string | null
+          student_relevance_score: number | null
+          tech_stack: string[] | null
           title: string
           updated_at: string
+          verification_status:
+            | Database["public"]["Enums"]["job_verification_status"]
+            | null
+          visa_sponsorship: boolean | null
           work_type: string
         }
         Insert: {
+          ai_classification_at?: string | null
+          ai_classification_done?: boolean | null
           apply_url?: string | null
           company: string
+          competition_score?: number | null
           created_at?: string
           description: string
+          education_requirements?: string | null
+          experience_level_parsed?: string | null
+          external_job_id?: string | null
+          first_seen_at?: string | null
+          freshness_rank?: number | null
+          hiring_urgency_score?: number | null
           id?: string
+          is_remote?: boolean | null
+          job_hash?: string | null
+          last_verified_at?: string | null
           location: string
           logo_url?: string | null
+          overall_rank_score?: number | null
           posted_date?: string | null
           requirements?: string[] | null
+          role_type?: Database["public"]["Enums"]["role_type"] | null
+          salary_currency?: string | null
           salary_max?: number | null
           salary_min?: number | null
           source?: string | null
+          source_id?: string | null
+          student_relevance_score?: number | null
+          tech_stack?: string[] | null
           title: string
           updated_at?: string
+          verification_status?:
+            | Database["public"]["Enums"]["job_verification_status"]
+            | null
+          visa_sponsorship?: boolean | null
           work_type?: string
         }
         Update: {
+          ai_classification_at?: string | null
+          ai_classification_done?: boolean | null
           apply_url?: string | null
           company?: string
+          competition_score?: number | null
           created_at?: string
           description?: string
+          education_requirements?: string | null
+          experience_level_parsed?: string | null
+          external_job_id?: string | null
+          first_seen_at?: string | null
+          freshness_rank?: number | null
+          hiring_urgency_score?: number | null
           id?: string
+          is_remote?: boolean | null
+          job_hash?: string | null
+          last_verified_at?: string | null
           location?: string
           logo_url?: string | null
+          overall_rank_score?: number | null
           posted_date?: string | null
           requirements?: string[] | null
+          role_type?: Database["public"]["Enums"]["role_type"] | null
+          salary_currency?: string | null
           salary_max?: number | null
           salary_min?: number | null
           source?: string | null
+          source_id?: string | null
+          student_relevance_score?: number | null
+          tech_stack?: string[] | null
           title?: string
           updated_at?: string
+          verification_status?:
+            | Database["public"]["Enums"]["job_verification_status"]
+            | null
+          visa_sponsorship?: boolean | null
           work_type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "jobs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "job_sources"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -746,6 +1013,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_freshness_rank: { Args: { posted: string }; Returns: number }
+      generate_job_hash: {
+        Args: {
+          p_apply_url: string
+          p_company: string
+          p_location: string
+          p_title: string
+        }
+        Returns: string
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -769,6 +1046,29 @@ export type Database = {
         | "rejected"
         | "withdrawn"
         | "accepted"
+      job_source_type:
+        | "greenhouse"
+        | "lever"
+        | "ashby"
+        | "workday"
+        | "career_page"
+        | "rss_feed"
+        | "sitemap"
+        | "manual"
+      job_verification_status:
+        | "pending"
+        | "verified_active"
+        | "stale"
+        | "expired"
+        | "removed"
+      role_type:
+        | "internship"
+        | "new_grad"
+        | "part_time"
+        | "full_time"
+        | "contract"
+        | "unknown"
+      source_status: "active" | "paused" | "failing" | "disabled"
       subscription_status:
         | "active"
         | "canceled"
@@ -914,6 +1214,32 @@ export const Constants = {
         "withdrawn",
         "accepted",
       ],
+      job_source_type: [
+        "greenhouse",
+        "lever",
+        "ashby",
+        "workday",
+        "career_page",
+        "rss_feed",
+        "sitemap",
+        "manual",
+      ],
+      job_verification_status: [
+        "pending",
+        "verified_active",
+        "stale",
+        "expired",
+        "removed",
+      ],
+      role_type: [
+        "internship",
+        "new_grad",
+        "part_time",
+        "full_time",
+        "contract",
+        "unknown",
+      ],
+      source_status: ["active", "paused", "failing", "disabled"],
       subscription_status: [
         "active",
         "canceled",
