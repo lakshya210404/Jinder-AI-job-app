@@ -1,3 +1,5 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -15,19 +17,109 @@ interface JobResult {
   logo_url?: string;
 }
 
+// Input validation constants
+const MAX_QUERY_LENGTH = 200;
+const MAX_LOCATION_LENGTH = 100;
+
+// Sanitize input to remove special search operators and dangerous characters
+function sanitizeInput(input: string): string {
+  return input.replace(/[^a-zA-Z0-9\s,.-]/g, ' ').trim().replace(/\s+/g, ' ');
+}
+
+// Map errors to safe user-facing messages
+function getSafeErrorMessage(status: number, _error: unknown): string {
+  if (status === 429) {
+    return 'Service is busy. Please try again in a moment.';
+  } else if (status >= 500) {
+    return 'External service unavailable. Please try again later.';
+  } else if (status === 401 || status === 403) {
+    return 'Service configuration error. Please contact support.';
+  }
+  return 'Failed to fetch jobs. Please try again.';
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { query = 'software engineer internship', location = '' } = await req.json();
+    // Authentication check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      console.error('Auth error:', claimsError?.message);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    console.log('Authenticated user:', userId);
+
+    // Parse and validate input
+    const body = await req.json();
+    let query = body.query || 'software engineer internship';
+    let location = body.location || '';
+
+    // Type validation
+    if (typeof query !== 'string') {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid query parameter' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (typeof location !== 'string') {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid location parameter' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Length validation
+    if (query.length > MAX_QUERY_LENGTH) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Query too long (max 200 characters)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (location.length > MAX_LOCATION_LENGTH) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Location too long (max 100 characters)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Sanitize inputs to prevent search operator injection
+    query = sanitizeInput(query);
+    location = sanitizeInput(location);
+
+    if (!query) {
+      query = 'software engineer internship';
+    }
 
     const apiKey = Deno.env.get('FIRECRAWL_API_KEY');
     if (!apiKey) {
       console.error('FIRECRAWL_API_KEY not configured');
       return new Response(
-        JSON.stringify({ success: false, error: 'Firecrawl connector not configured' }),
+        JSON.stringify({ success: false, error: 'Service not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -37,7 +129,7 @@ Deno.serve(async (req) => {
       ? `${query} jobs ${location} site:linkedin.com OR site:indeed.com OR site:glassdoor.com`
       : `${query} jobs site:linkedin.com OR site:indeed.com OR site:glassdoor.com`;
 
-    console.log('Searching for jobs:', searchQuery);
+    console.log('User', userId, 'searching for jobs:', searchQuery);
 
     const response = await fetch('https://api.firecrawl.dev/v1/search', {
       method: 'POST',
@@ -57,14 +149,15 @@ Deno.serve(async (req) => {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Firecrawl API error:', data);
+      console.error('Firecrawl API error:', { status: response.status, error: data });
+      const userMessage = getSafeErrorMessage(response.status, data);
       return new Response(
-        JSON.stringify({ success: false, error: data.error || `Request failed with status ${response.status}` }),
-        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: userMessage }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Search returned', data.data?.length || 0, 'results');
+    console.log('Search returned', data.data?.length || 0, 'results for user', userId);
 
     // Parse job results from Firecrawl search
     const jobs: JobResult[] = (data.data || []).map((result: any) => {
@@ -146,7 +239,7 @@ Deno.serve(async (req) => {
       };
     });
 
-    console.log('Processed', jobs.length, 'jobs');
+    console.log('Processed', jobs.length, 'jobs for user', userId);
 
     return new Response(
       JSON.stringify({ success: true, jobs }),
@@ -154,9 +247,8 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('Error fetching jobs:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch jobs';
     return new Response(
-      JSON.stringify({ success: false, error: errorMessage }),
+      JSON.stringify({ success: false, error: 'Failed to fetch jobs' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
