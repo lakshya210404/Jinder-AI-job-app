@@ -12,7 +12,7 @@ export function useExternalJobs() {
   const [loading, setLoading] = useState(false);
   const [externalJobs, setExternalJobs] = useState<JobData[]>([]);
 
-  const fetchExternalJobs = async (options: FetchJobsOptions = {}) => {
+  const fetchExternalJobs = async (options: FetchJobsOptions = {}, retryCount = 0) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("fetch-jobs", {
@@ -24,11 +24,17 @@ export function useExternalJobs() {
 
       if (error) {
         console.error("Error fetching external jobs:", error);
+        // Retry on cold start timeout (up to 2 retries)
+        if (retryCount < 2 && error.message?.includes("Failed to fetch")) {
+          console.log(`Retrying fetch (attempt ${retryCount + 2})...`);
+          return fetchExternalJobs(options, retryCount + 1);
+        }
         toast({
           title: "Error fetching jobs",
-          description: error.message,
+          description: "Could not load external jobs. Try clicking 'Search Web' again.",
           variant: "destructive",
         });
+        setLoading(false);
         return [];
       }
 
@@ -39,6 +45,7 @@ export function useExternalJobs() {
           description: data.error || "Failed to fetch jobs from external sources",
           variant: "destructive",
         });
+        setLoading(false);
         return [];
       }
 
@@ -61,17 +68,28 @@ export function useExternalJobs() {
       }));
 
       setExternalJobs(jobs);
+      if (jobs.length > 0) {
+        toast({
+          title: `Found ${jobs.length} jobs`,
+          description: "Real job postings from the web",
+        });
+      }
+      setLoading(false);
       return jobs;
     } catch (err) {
       console.error("Failed to fetch external jobs:", err);
+      // Retry on network errors
+      if (retryCount < 2) {
+        console.log(`Retrying fetch (attempt ${retryCount + 2})...`);
+        return fetchExternalJobs(options, retryCount + 1);
+      }
       toast({
         title: "Error",
-        description: "Failed to connect to job search service",
+        description: "Failed to connect to job search service. Try again.",
         variant: "destructive",
       });
-      return [];
-    } finally {
       setLoading(false);
+      return [];
     }
   };
 

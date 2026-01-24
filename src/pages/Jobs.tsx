@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { JobFilters, JobFiltersState } from "@/components/jobs/JobFilters";
 import { JobListCard, JobData } from "@/components/jobs/JobListCard";
+import { JobDetailDrawer } from "@/components/jobs/JobDetailDrawer";
 import { useAuth } from "@/hooks/useAuth";
 import { useExternalJobs } from "@/hooks/useExternalJobs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 
 const initialFilters: JobFiltersState = {
   search: "",
@@ -25,6 +26,8 @@ export default function Jobs() {
   const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<JobFiltersState>(initialFilters);
+  const [selectedJob, setSelectedJob] = useState<JobData | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { externalJobs, loading: externalLoading, fetchExternalJobs } = useExternalJobs();
@@ -258,11 +261,26 @@ export default function Jobs() {
                 onSave={handleSaveJob}
                 onApply={handleApplyJob}
                 onGenerateResume={handleGenerateResume}
+                onClick={() => {
+                  setSelectedJob(job);
+                  setDrawerOpen(true);
+                }}
               />
             ))
           )}
         </div>
       </div>
+
+      {/* Job Detail Drawer */}
+      <JobDetailDrawer
+        job={selectedJob}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        isSaved={selectedJob ? savedJobs.has(selectedJob.id) : false}
+        onSave={handleSaveJob}
+        onApply={handleApplyJob}
+        onGenerateResume={handleGenerateResume}
+      />
     </DashboardLayout>
   );
 }

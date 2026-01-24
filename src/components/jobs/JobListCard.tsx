@@ -26,6 +26,7 @@ interface JobListCardProps {
   onSave?: (jobId: string) => void;
   onApply?: (jobId: string) => void;
   onGenerateResume?: (job: JobData) => void;
+  onClick?: () => void;
 }
 
 export function JobListCard({
@@ -34,6 +35,7 @@ export function JobListCard({
   onSave,
   onApply,
   onGenerateResume,
+  onClick,
 }: JobListCardProps) {
   const formatSalary = (min: number | null, max: number | null) => {
     if (!min && !max) return null;
@@ -46,7 +48,7 @@ export function JobListCard({
   const postedAt = formatDistanceToNow(new Date(job.created_at), { addSuffix: true });
 
   return (
-    <div className="apple-card p-5 group">
+    <div className="apple-card p-5 group cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
       <div className="flex items-start gap-4">
         {/* Logo */}
         <div className="w-14 h-14 rounded-xl bg-secondary flex items-center justify-center text-2xl shrink-0 overflow-hidden">
@@ -111,7 +113,7 @@ export function JobListCard({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
+      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border" onClick={(e) => e.stopPropagation()}>
         {job.apply_url ? (
           <Button
             asChild
