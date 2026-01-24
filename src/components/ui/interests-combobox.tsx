@@ -1,21 +1,16 @@
 import * as React from "react";
-import { Check, ChevronsUpDown, Briefcase, X } from "lucide-react";
+import { ChevronsUpDown, Briefcase, X, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const interests = [
   { value: "software-engineering", label: "Software Engineering" },
@@ -79,6 +74,11 @@ export function InterestsCombobox({
   className,
 }: InterestsComboboxProps) {
   const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+
+  const filteredInterests = interests.filter((interest) =>
+    interest.label.toLowerCase().includes(search.toLowerCase())
+  );
 
   const selectedInterests = interests.filter((interest) =>
     value.some(
@@ -103,6 +103,15 @@ export function InterestsCombobox({
     onChange(value.filter((v) => v.toLowerCase() !== interestLabel.toLowerCase()));
   };
 
+  const isSelected = (interestLabel: string) =>
+    value.some((v) => v.toLowerCase() === interestLabel.toLowerCase());
+
+  const getDisplayText = () => {
+    if (selectedInterests.length === 0) return placeholder;
+    if (selectedInterests.length === 1) return selectedInterests[0].label;
+    return `${selectedInterests.length} interests selected`;
+  };
+
   return (
     <div className="space-y-2">
       <Popover open={open} onOpenChange={setOpen}>
@@ -112,49 +121,56 @@ export function InterestsCombobox({
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "w-full justify-between bg-secondary border-0 text-left font-normal",
+              "w-full justify-between bg-background border border-border hover:bg-muted/50 text-left font-normal h-10 rounded-lg",
               selectedInterests.length === 0 && "text-muted-foreground",
               className
             )}
           >
             <span className="flex items-center gap-2 truncate">
-              <Briefcase className="h-4 w-4 shrink-0 text-muted-foreground" />
-              {selectedInterests.length === 0
-                ? placeholder
-                : `${selectedInterests.length} ${selectedInterests.length === 1 ? "interest" : "interests"} selected`}
+              <Briefcase className="h-4 w-4 shrink-0 text-primary" />
+              <span className="truncate">{getDisplayText()}</span>
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-popover z-50" align="start">
-          <Command>
-            <CommandInput placeholder="Search interests..." />
-            <CommandList>
-              <CommandEmpty>No interest found.</CommandEmpty>
-              <CommandGroup>
-                {interests.map((interest) => {
-                  const isSelected = selectedInterests.some(
-                    (i) => i.value === interest.value
-                  );
-                  return (
-                    <CommandItem
-                      key={interest.value}
-                      value={interest.label}
-                      onSelect={() => toggleInterest(interest.label)}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          isSelected ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      {interest.label}
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            </CommandList>
-          </Command>
+        <PopoverContent 
+          className="w-[--radix-popover-trigger-width] p-0 bg-popover border border-border shadow-lg rounded-lg z-50" 
+          align="start"
+        >
+          <div className="p-2 border-b border-border">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search interests..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8 h-9 bg-muted/50 border-0"
+              />
+            </div>
+          </div>
+          <ScrollArea className="h-[200px]">
+            <div className="p-1">
+              {filteredInterests.length === 0 ? (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  No interest found.
+                </div>
+              ) : (
+                filteredInterests.map((interest) => (
+                  <label
+                    key={interest.value}
+                    className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
+                  >
+                    <Checkbox
+                      checked={isSelected(interest.label)}
+                      onCheckedChange={() => toggleInterest(interest.label)}
+                      className="border-muted-foreground/50"
+                    />
+                    <span className="text-sm">{interest.label}</span>
+                  </label>
+                ))
+              )}
+            </div>
+          </ScrollArea>
         </PopoverContent>
       </Popover>
 
