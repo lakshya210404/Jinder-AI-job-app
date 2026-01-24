@@ -60,6 +60,14 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Colorful accent colors
+        purple: "hsl(var(--color-purple))",
+        blue: "hsl(var(--color-blue))",
+        teal: "hsl(var(--color-teal))",
+        green: "hsl(var(--color-green))",
+        orange: "hsl(var(--color-orange))",
+        pink: "hsl(var(--color-pink))",
+        red: "hsl(var(--color-red))",
       },
       borderRadius: {
         lg: "var(--radius)",

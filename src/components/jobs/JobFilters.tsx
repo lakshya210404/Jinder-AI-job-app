@@ -104,7 +104,7 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
           options={jobTypes}
           placeholder="Job Type"
           searchPlaceholder="Search job types..."
-          icon={<Clock className="h-4 w-4 text-muted-foreground" />}
+          icon={<Clock className="h-4 w-4 text-purple" />}
           className="w-[150px]"
         />
 
@@ -123,7 +123,7 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
           options={workModes}
           placeholder="Work Mode"
           searchPlaceholder="Search modes..."
-          icon={<MapPin className="h-4 w-4 text-muted-foreground" />}
+          icon={<MapPin className="h-4 w-4 text-teal" />}
           className="w-[160px]"
         />
 
@@ -133,7 +133,7 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
           options={salaryRanges}
           placeholder="Salary"
           searchPlaceholder="Search salary..."
-          icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
+          icon={<DollarSign className="h-4 w-4 text-green" />}
           className="w-[140px]"
         />
 
@@ -143,7 +143,7 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
           options={datePostedOptions}
           placeholder="Date Posted"
           searchPlaceholder="Search dates..."
-          icon={<Calendar className="h-4 w-4 text-muted-foreground" />}
+          icon={<Calendar className="h-4 w-4 text-blue" />}
           className="w-[160px]"
         />
       </div>
@@ -153,17 +153,28 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm text-muted-foreground">Active filters:</span>
           {activeFilters.map(({ key, value }) => {
+            // Define colors for different filter types
+            const filterColors: Record<string, string> = {
+              search: "bg-purple/10 text-purple border-purple/20",
+              jobType: "bg-purple/10 text-purple border-purple/20",
+              location: "bg-teal/10 text-teal border-teal/20",
+              workMode: "bg-blue/10 text-blue border-blue/20",
+              salaryMin: "bg-green/10 text-green border-green/20",
+              datePosted: "bg-orange/10 text-orange border-orange/20",
+            };
+            const colorClass = filterColors[key] || "bg-secondary text-secondary-foreground";
+
             if (key === "search" && typeof value === "string") {
               return (
                 <Badge
                   key={key}
-                  variant="secondary"
-                  className="rounded-full px-3 py-1 gap-1"
+                  variant="outline"
+                  className={`rounded-full px-3 py-1 gap-1 border ${colorClass}`}
                 >
                   "{value}"
                   <button
                     onClick={() => updateFilter("search", "")}
-                    className="ml-1 hover:text-destructive"
+                    className="ml-1 hover:opacity-70"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -174,13 +185,13 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
               return (
                 <Badge
                   key={key}
-                  variant="secondary"
-                  className="rounded-full px-3 py-1 gap-1"
+                  variant="outline"
+                  className={`rounded-full px-3 py-1 gap-1 border ${colorClass}`}
                 >
                   {value.length === 1 ? value[0] : `${value.length} locations`}
                   <button
                     onClick={() => updateFilter("location", [])}
-                    className="ml-1 hover:text-destructive"
+                    className="ml-1 hover:opacity-70"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -191,13 +202,13 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
               return (
                 <Badge
                   key={key}
-                  variant="secondary"
-                  className="rounded-full px-3 py-1 gap-1"
+                  variant="outline"
+                  className={`rounded-full px-3 py-1 gap-1 border ${colorClass}`}
                 >
                   {getFilterLabel(key, value)}
                   <button
                     onClick={() => updateFilter(key as keyof JobFiltersState, [])}
-                    className="ml-1 hover:text-destructive"
+                    className="ml-1 hover:opacity-70"
                   >
                     <X className="h-3 w-3" />
                   </button>

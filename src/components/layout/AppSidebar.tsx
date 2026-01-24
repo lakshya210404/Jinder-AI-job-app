@@ -17,15 +17,15 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 const mainNavItems = [
-  { title: "Browse Jobs", url: "/", icon: Briefcase },
-  { title: "Saved Jobs", url: "/saved", icon: BookmarkCheck },
-  { title: "My Applications", url: "/applications", icon: FileText },
-  { title: "AI Resume Builder", url: "/resume", icon: Sparkles },
+  { title: "Browse Jobs", url: "/", icon: Briefcase, color: "text-purple" },
+  { title: "Saved Jobs", url: "/saved", icon: BookmarkCheck, color: "text-pink" },
+  { title: "My Applications", url: "/applications", icon: FileText, color: "text-blue" },
+  { title: "AI Resume Builder", url: "/resume", icon: Sparkles, color: "text-orange" },
 ];
 
 const bottomNavItems = [
-  { title: "Profile", url: "/profile", icon: User },
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Profile", url: "/profile", icon: User, color: "text-teal" },
+  { title: "Settings", url: "/settings", icon: Settings, color: "text-muted-foreground" },
 ];
 
 export function AppSidebar() {
@@ -58,7 +58,7 @@ export function AppSidebar() {
                     className="h-11 rounded-xl px-4 transition-all duration-200"
                   >
                     <button onClick={() => navigate(item.url)} className="flex items-center gap-3 w-full">
-                      <item.icon className="h-5 w-5" />
+                      <item.icon className={`h-5 w-5 ${isActive(item.url) ? "text-primary" : item.color}`} />
                       <span className="font-medium">{item.title}</span>
                     </button>
                   </SidebarMenuButton>
@@ -80,7 +80,7 @@ export function AppSidebar() {
                 className="h-10 rounded-xl px-4 transition-all duration-200"
               >
                 <button onClick={() => navigate(item.url)} className="flex items-center gap-3 w-full">
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className={`h-4 w-4 ${isActive(item.url) ? "text-primary" : item.color}`} />
                   <span className="text-sm">{item.title}</span>
                 </button>
               </SidebarMenuButton>
