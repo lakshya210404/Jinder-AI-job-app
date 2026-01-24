@@ -1,4 +1,4 @@
-import { Check, Sparkles, Zap, Crown } from "lucide-react";
+import { Check, Sparkles, Zap, Crown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,7 @@ interface PricingCardProps {
   isPopular?: boolean;
   onSelect: (plan: SubscriptionPlan) => void;
   isCurrentPlan?: boolean;
+  isLoading?: boolean;
 }
 
 const roleIcons = {
@@ -27,7 +28,7 @@ const roleColors = {
   admin: "from-[hsl(var(--color-purple))]/20 to-[hsl(var(--color-pink))]/10",
 };
 
-export function PricingCard({ plan, isPopular, onSelect, isCurrentPlan }: PricingCardProps) {
+export function PricingCard({ plan, isPopular, onSelect, isCurrentPlan, isLoading }: PricingCardProps) {
   const Icon = roleIcons[plan.role] || Sparkles;
   const features = (plan.features as string[]) || [];
   const priceInDollars = plan.price_monthly / 100;
@@ -108,13 +109,17 @@ export function PricingCard({ plan, isPopular, onSelect, isCurrentPlan }: Pricin
         variant={isPopular ? "gradient" : "outline"}
         size="lg"
         className="w-full"
-        disabled={isCurrentPlan}
+        disabled={isCurrentPlan || isLoading}
       >
-        {isCurrentPlan
-          ? "Current Plan"
-          : priceInDollars === 0
-          ? "Get Started"
-          : "Upgrade Now"}
+        {isLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : isCurrentPlan ? (
+          "Current Plan"
+        ) : priceInDollars === 0 ? (
+          "Get Started"
+        ) : (
+          "Upgrade Now"
+        )}
       </Button>
     </div>
   );
