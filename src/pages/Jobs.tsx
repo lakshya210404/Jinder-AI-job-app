@@ -4,9 +4,12 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { JobFilters, JobFiltersState } from "@/components/jobs/JobFilters";
 import { JobListCard, JobData } from "@/components/jobs/JobListCard";
 import { useAuth } from "@/hooks/useAuth";
+import { useExternalJobs } from "@/hooks/useExternalJobs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, Globe } from "lucide-react";
 
 const initialFilters: JobFiltersState = {
   search: "",
@@ -18,12 +21,16 @@ const initialFilters: JobFiltersState = {
 };
 
 export default function Jobs() {
-  const [jobs, setJobs] = useState<JobData[]>([]);
+  const [dbJobs, setDbJobs] = useState<JobData[]>([]);
   const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<JobFiltersState>(initialFilters);
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { externalJobs, loading: externalLoading, fetchExternalJobs } = useExternalJobs();
+
+  // Combine database jobs and external jobs
+  const jobs = [...dbJobs, ...externalJobs];
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -33,12 +40,14 @@ export default function Jobs() {
 
   useEffect(() => {
     if (user) {
-      fetchJobs();
+      fetchDbJobs();
       fetchSavedJobs();
+      // Auto-fetch external jobs on initial load
+      fetchExternalJobs({ query: "software engineer internship" });
     }
   }, [user]);
 
-  const fetchJobs = async () => {
+  const fetchDbJobs = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("jobs")
@@ -48,7 +57,7 @@ export default function Jobs() {
     if (error) {
       toast({ title: "Error loading jobs", description: error.message, variant: "destructive" });
     } else {
-      setJobs(data || []);
+      setDbJobs((data as JobData[]) || []);
     }
     setLoading(false);
   };
@@ -180,15 +189,34 @@ export default function Jobs() {
     );
   }
 
+  const handleRefreshExternalJobs = () => {
+    const searchQuery = filters.search || "software engineer internship";
+    const locationQuery = Array.isArray(filters.location) ? filters.location.join(" ") : "";
+    fetchExternalJobs({ query: searchQuery, location: locationQuery });
+  };
+
+  const isLoading = loading || externalLoading;
+
   return (
     <DashboardLayout>
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Browse Jobs</h1>
-          <p className="text-muted-foreground mt-1">
-            Find your perfect role from {jobs.length} available positions
-          </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Browse Jobs</h1>
+            <p className="text-muted-foreground mt-1">
+              {isLoading ? "Searching for jobs..." : `Found ${filteredJobs.length} jobs from multiple sources`}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={handleRefreshExternalJobs}
+            disabled={externalLoading}
+            className="rounded-xl gap-2"
+          >
+            <Globe className={`h-4 w-4 text-blue ${externalLoading ? "animate-spin" : ""}`} />
+            {externalLoading ? "Searching..." : "Search Web"}
+          </Button>
         </div>
 
         {/* Filters */}
@@ -200,7 +228,7 @@ export default function Jobs() {
 
         {/* Job List */}
         <div className="space-y-4">
-          {loading ? (
+          {isLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="apple-card p-5">
                 <div className="flex gap-4">
@@ -215,7 +243,11 @@ export default function Jobs() {
             ))
           ) : filteredJobs.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No jobs found matching your criteria.</p>
+              <Globe className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground mb-4">No jobs found matching your criteria.</p>
+              <Button onClick={handleRefreshExternalJobs} variant="outline" className="rounded-xl">
+                Search for more jobs
+              </Button>
             </div>
           ) : (
             filteredJobs.map((job) => (
