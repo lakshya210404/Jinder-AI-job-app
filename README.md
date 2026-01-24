@@ -1,73 +1,80 @@
-# Welcome to your Lovable project
+# Jinder 🔥  
+**AI-Powered Job Matching Platform**
 
-## Project info
+Jinder is an AI-driven job matching application designed to intelligently connect candidates with relevant job opportunities based on skills, preferences, and experience. Inspired by modern recommendation systems, Jinder focuses on personalization, speed, and a clean user experience.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+---
 
-## How can I edit this code?
+## 🚀 Overview
 
-There are several ways of editing your application.
+Finding the right job is noisy and inefficient. Jinder aims to reduce that friction by using AI-assisted matching logic to surface roles that actually fit a user — not just keyword matches.
 
-**Use Lovable**
+This project explores how modern frontend frameworks, backend services, and AI-based decision logic can be combined into a scalable, production-style web application.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🧠 Key Features
 
-**Use your preferred IDE**
+- 🤖 **AI-Assisted Job Matching**  
+  Matches users to jobs based on skills, preferences, and profile signals.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- 👤 **User Authentication & Profiles**  
+  Secure sign-up/login with persistent user profiles.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- 💼 **Job Feed & Recommendations**  
+  Personalized job listings instead of generic search results.
 
-Follow these steps:
+- ⚡ **Modern, Responsive UI**  
+  Fast and clean interface built for a smooth user experience.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- 🔐 **Backend & Data Management**  
+  Structured backend logic with real-time database support.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+---
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 🛠 Tech Stack
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
+**Frontend**
 - React
-- shadcn-ui
+- TypeScript
+- Vite
 - Tailwind CSS
+- shadcn/ui
 
-## How can I deploy this project?
+**Backend & Infrastructure**
+- Supabase (Auth, Database, Storage)
+- REST-style API interactions
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+**AI / Logic Layer**
+- Rule-based + AI-assisted matching logic  
+- Extensible architecture for future ML models
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
+## 🧩 Architecture (High Level)
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- **Frontend** handles UI, state management, and user interactions
+- **Backend** manages authentication, data persistence, and access control
+- **Matching Engine** evaluates user profiles against job data to generate recommendations
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+The system is designed to be modular, making it easy to improve the matching logic or replace it with more advanced ML models in the future.
+
+---
+
+## 📸 Screenshots
+
+> *(Add screenshots or a short demo GIF here once ready)*
+
+---
+
+## 🧪 Running Locally
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/jinder.git
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
