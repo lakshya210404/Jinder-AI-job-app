@@ -8,209 +8,100 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-const countries = [
-  { value: "remote", label: "Remote (Anywhere)" },
-  { value: "afghanistan", label: "Afghanistan" },
-  { value: "albania", label: "Albania" },
-  { value: "algeria", label: "Algeria" },
-  { value: "andorra", label: "Andorra" },
-  { value: "angola", label: "Angola" },
-  { value: "antigua-and-barbuda", label: "Antigua and Barbuda" },
-  { value: "argentina", label: "Argentina" },
-  { value: "armenia", label: "Armenia" },
-  { value: "australia", label: "Australia" },
-  { value: "austria", label: "Austria" },
-  { value: "azerbaijan", label: "Azerbaijan" },
-  { value: "bahamas", label: "Bahamas" },
-  { value: "bahrain", label: "Bahrain" },
-  { value: "bangladesh", label: "Bangladesh" },
-  { value: "barbados", label: "Barbados" },
-  { value: "belarus", label: "Belarus" },
-  { value: "belgium", label: "Belgium" },
-  { value: "belize", label: "Belize" },
-  { value: "benin", label: "Benin" },
-  { value: "bhutan", label: "Bhutan" },
-  { value: "bolivia", label: "Bolivia" },
-  { value: "bosnia-and-herzegovina", label: "Bosnia and Herzegovina" },
-  { value: "botswana", label: "Botswana" },
-  { value: "brazil", label: "Brazil" },
-  { value: "brunei", label: "Brunei" },
-  { value: "bulgaria", label: "Bulgaria" },
-  { value: "burkina-faso", label: "Burkina Faso" },
-  { value: "burundi", label: "Burundi" },
-  { value: "cabo-verde", label: "Cabo Verde" },
-  { value: "cambodia", label: "Cambodia" },
-  { value: "cameroon", label: "Cameroon" },
-  { value: "canada", label: "Canada" },
-  { value: "central-african-republic", label: "Central African Republic" },
-  { value: "chad", label: "Chad" },
-  { value: "chile", label: "Chile" },
-  { value: "china", label: "China" },
-  { value: "colombia", label: "Colombia" },
-  { value: "comoros", label: "Comoros" },
-  { value: "congo-drc", label: "Congo (DRC)" },
-  { value: "congo-republic", label: "Congo (Republic)" },
-  { value: "costa-rica", label: "Costa Rica" },
-  { value: "croatia", label: "Croatia" },
-  { value: "cuba", label: "Cuba" },
-  { value: "cyprus", label: "Cyprus" },
-  { value: "czech-republic", label: "Czech Republic" },
-  { value: "denmark", label: "Denmark" },
-  { value: "djibouti", label: "Djibouti" },
-  { value: "dominica", label: "Dominica" },
-  { value: "dominican-republic", label: "Dominican Republic" },
-  { value: "ecuador", label: "Ecuador" },
-  { value: "egypt", label: "Egypt" },
-  { value: "el-salvador", label: "El Salvador" },
-  { value: "equatorial-guinea", label: "Equatorial Guinea" },
-  { value: "eritrea", label: "Eritrea" },
-  { value: "estonia", label: "Estonia" },
-  { value: "eswatini", label: "Eswatini" },
-  { value: "ethiopia", label: "Ethiopia" },
-  { value: "fiji", label: "Fiji" },
-  { value: "finland", label: "Finland" },
-  { value: "france", label: "France" },
-  { value: "gabon", label: "Gabon" },
-  { value: "gambia", label: "Gambia" },
-  { value: "georgia", label: "Georgia" },
-  { value: "germany", label: "Germany" },
-  { value: "ghana", label: "Ghana" },
-  { value: "greece", label: "Greece" },
-  { value: "grenada", label: "Grenada" },
-  { value: "guatemala", label: "Guatemala" },
-  { value: "guinea", label: "Guinea" },
-  { value: "guinea-bissau", label: "Guinea-Bissau" },
-  { value: "guyana", label: "Guyana" },
-  { value: "haiti", label: "Haiti" },
-  { value: "honduras", label: "Honduras" },
-  { value: "hungary", label: "Hungary" },
-  { value: "iceland", label: "Iceland" },
-  { value: "india", label: "India" },
-  { value: "indonesia", label: "Indonesia" },
-  { value: "iran", label: "Iran" },
-  { value: "iraq", label: "Iraq" },
-  { value: "ireland", label: "Ireland" },
-  { value: "israel", label: "Israel" },
-  { value: "italy", label: "Italy" },
-  { value: "ivory-coast", label: "Ivory Coast" },
-  { value: "jamaica", label: "Jamaica" },
-  { value: "japan", label: "Japan" },
-  { value: "jordan", label: "Jordan" },
-  { value: "kazakhstan", label: "Kazakhstan" },
-  { value: "kenya", label: "Kenya" },
-  { value: "kiribati", label: "Kiribati" },
-  { value: "kosovo", label: "Kosovo" },
-  { value: "kuwait", label: "Kuwait" },
-  { value: "kyrgyzstan", label: "Kyrgyzstan" },
-  { value: "laos", label: "Laos" },
-  { value: "latvia", label: "Latvia" },
-  { value: "lebanon", label: "Lebanon" },
-  { value: "lesotho", label: "Lesotho" },
-  { value: "liberia", label: "Liberia" },
-  { value: "libya", label: "Libya" },
-  { value: "liechtenstein", label: "Liechtenstein" },
-  { value: "lithuania", label: "Lithuania" },
-  { value: "luxembourg", label: "Luxembourg" },
-  { value: "madagascar", label: "Madagascar" },
-  { value: "malawi", label: "Malawi" },
-  { value: "malaysia", label: "Malaysia" },
-  { value: "maldives", label: "Maldives" },
-  { value: "mali", label: "Mali" },
-  { value: "malta", label: "Malta" },
-  { value: "marshall-islands", label: "Marshall Islands" },
-  { value: "mauritania", label: "Mauritania" },
-  { value: "mauritius", label: "Mauritius" },
-  { value: "mexico", label: "Mexico" },
-  { value: "micronesia", label: "Micronesia" },
-  { value: "moldova", label: "Moldova" },
-  { value: "monaco", label: "Monaco" },
-  { value: "mongolia", label: "Mongolia" },
-  { value: "montenegro", label: "Montenegro" },
-  { value: "morocco", label: "Morocco" },
-  { value: "mozambique", label: "Mozambique" },
-  { value: "myanmar", label: "Myanmar" },
-  { value: "namibia", label: "Namibia" },
-  { value: "nauru", label: "Nauru" },
-  { value: "nepal", label: "Nepal" },
-  { value: "netherlands", label: "Netherlands" },
-  { value: "new-zealand", label: "New Zealand" },
-  { value: "nicaragua", label: "Nicaragua" },
-  { value: "niger", label: "Niger" },
-  { value: "nigeria", label: "Nigeria" },
-  { value: "north-korea", label: "North Korea" },
-  { value: "north-macedonia", label: "North Macedonia" },
-  { value: "norway", label: "Norway" },
-  { value: "oman", label: "Oman" },
-  { value: "pakistan", label: "Pakistan" },
-  { value: "palau", label: "Palau" },
-  { value: "palestine", label: "Palestine" },
-  { value: "panama", label: "Panama" },
-  { value: "papua-new-guinea", label: "Papua New Guinea" },
-  { value: "paraguay", label: "Paraguay" },
-  { value: "peru", label: "Peru" },
-  { value: "philippines", label: "Philippines" },
-  { value: "poland", label: "Poland" },
-  { value: "portugal", label: "Portugal" },
-  { value: "qatar", label: "Qatar" },
-  { value: "romania", label: "Romania" },
-  { value: "russia", label: "Russia" },
-  { value: "rwanda", label: "Rwanda" },
-  { value: "saint-kitts-and-nevis", label: "Saint Kitts and Nevis" },
-  { value: "saint-lucia", label: "Saint Lucia" },
-  { value: "saint-vincent-and-the-grenadines", label: "Saint Vincent and the Grenadines" },
-  { value: "samoa", label: "Samoa" },
-  { value: "san-marino", label: "San Marino" },
-  { value: "sao-tome-and-principe", label: "São Tomé and Príncipe" },
-  { value: "saudi-arabia", label: "Saudi Arabia" },
-  { value: "senegal", label: "Senegal" },
-  { value: "serbia", label: "Serbia" },
-  { value: "seychelles", label: "Seychelles" },
-  { value: "sierra-leone", label: "Sierra Leone" },
-  { value: "singapore", label: "Singapore" },
-  { value: "slovakia", label: "Slovakia" },
-  { value: "slovenia", label: "Slovenia" },
-  { value: "solomon-islands", label: "Solomon Islands" },
-  { value: "somalia", label: "Somalia" },
-  { value: "south-africa", label: "South Africa" },
-  { value: "south-korea", label: "South Korea" },
-  { value: "south-sudan", label: "South Sudan" },
-  { value: "spain", label: "Spain" },
-  { value: "sri-lanka", label: "Sri Lanka" },
-  { value: "sudan", label: "Sudan" },
-  { value: "suriname", label: "Suriname" },
-  { value: "sweden", label: "Sweden" },
-  { value: "switzerland", label: "Switzerland" },
-  { value: "syria", label: "Syria" },
-  { value: "taiwan", label: "Taiwan" },
-  { value: "tajikistan", label: "Tajikistan" },
-  { value: "tanzania", label: "Tanzania" },
-  { value: "thailand", label: "Thailand" },
-  { value: "timor-leste", label: "Timor-Leste" },
-  { value: "togo", label: "Togo" },
-  { value: "tonga", label: "Tonga" },
-  { value: "trinidad-and-tobago", label: "Trinidad and Tobago" },
-  { value: "tunisia", label: "Tunisia" },
-  { value: "turkey", label: "Turkey" },
-  { value: "turkmenistan", label: "Turkmenistan" },
-  { value: "tuvalu", label: "Tuvalu" },
-  { value: "uganda", label: "Uganda" },
-  { value: "ukraine", label: "Ukraine" },
-  { value: "united-arab-emirates", label: "United Arab Emirates" },
-  { value: "united-kingdom", label: "United Kingdom" },
-  { value: "united-states", label: "United States" },
-  { value: "uruguay", label: "Uruguay" },
-  { value: "uzbekistan", label: "Uzbekistan" },
-  { value: "vanuatu", label: "Vanuatu" },
-  { value: "vatican-city", label: "Vatican City" },
-  { value: "venezuela", label: "Venezuela" },
-  { value: "vietnam", label: "Vietnam" },
-  { value: "yemen", label: "Yemen" },
-  { value: "zambia", label: "Zambia" },
-  { value: "zimbabwe", label: "Zimbabwe" },
+const locations = [
+  // Remote
+  { value: "remote", label: "Remote (Anywhere)", type: "remote" },
+  
+  // United States - Cities
+  { value: "new-york-ny-usa", label: "New York, NY, USA", type: "city" },
+  { value: "los-angeles-ca-usa", label: "Los Angeles, CA, USA", type: "city" },
+  { value: "chicago-il-usa", label: "Chicago, IL, USA", type: "city" },
+  { value: "houston-tx-usa", label: "Houston, TX, USA", type: "city" },
+  { value: "phoenix-az-usa", label: "Phoenix, AZ, USA", type: "city" },
+  { value: "san-francisco-ca-usa", label: "San Francisco, CA, USA", type: "city" },
+  { value: "seattle-wa-usa", label: "Seattle, WA, USA", type: "city" },
+  { value: "austin-tx-usa", label: "Austin, TX, USA", type: "city" },
+  { value: "boston-ma-usa", label: "Boston, MA, USA", type: "city" },
+  { value: "denver-co-usa", label: "Denver, CO, USA", type: "city" },
+  { value: "miami-fl-usa", label: "Miami, FL, USA", type: "city" },
+  { value: "atlanta-ga-usa", label: "Atlanta, GA, USA", type: "city" },
+  { value: "dallas-tx-usa", label: "Dallas, TX, USA", type: "city" },
+  { value: "san-diego-ca-usa", label: "San Diego, CA, USA", type: "city" },
+  { value: "portland-or-usa", label: "Portland, OR, USA", type: "city" },
+  
+  // Canada - Cities
+  { value: "toronto-on-canada", label: "Toronto, ON, Canada", type: "city" },
+  { value: "vancouver-bc-canada", label: "Vancouver, BC, Canada", type: "city" },
+  { value: "montreal-qc-canada", label: "Montreal, QC, Canada", type: "city" },
+  { value: "calgary-ab-canada", label: "Calgary, AB, Canada", type: "city" },
+  { value: "ottawa-on-canada", label: "Ottawa, ON, Canada", type: "city" },
+  
+  // United Kingdom - Cities
+  { value: "london-uk", label: "London, UK", type: "city" },
+  { value: "manchester-uk", label: "Manchester, UK", type: "city" },
+  { value: "birmingham-uk", label: "Birmingham, UK", type: "city" },
+  { value: "edinburgh-uk", label: "Edinburgh, UK", type: "city" },
+  { value: "bristol-uk", label: "Bristol, UK", type: "city" },
+  
+  // Germany - Cities
+  { value: "berlin-germany", label: "Berlin, Germany", type: "city" },
+  { value: "munich-germany", label: "Munich, Germany", type: "city" },
+  { value: "frankfurt-germany", label: "Frankfurt, Germany", type: "city" },
+  { value: "hamburg-germany", label: "Hamburg, Germany", type: "city" },
+  
+  // France - Cities
+  { value: "paris-france", label: "Paris, France", type: "city" },
+  { value: "lyon-france", label: "Lyon, France", type: "city" },
+  { value: "marseille-france", label: "Marseille, France", type: "city" },
+  
+  // Australia - Cities
+  { value: "sydney-australia", label: "Sydney, Australia", type: "city" },
+  { value: "melbourne-australia", label: "Melbourne, Australia", type: "city" },
+  { value: "brisbane-australia", label: "Brisbane, Australia", type: "city" },
+  
+  // India - Cities
+  { value: "bangalore-india", label: "Bangalore, India", type: "city" },
+  { value: "mumbai-india", label: "Mumbai, India", type: "city" },
+  { value: "delhi-india", label: "Delhi, India", type: "city" },
+  { value: "hyderabad-india", label: "Hyderabad, India", type: "city" },
+  { value: "pune-india", label: "Pune, India", type: "city" },
+  
+  // Singapore
+  { value: "singapore", label: "Singapore", type: "city" },
+  
+  // Netherlands - Cities
+  { value: "amsterdam-netherlands", label: "Amsterdam, Netherlands", type: "city" },
+  
+  // Ireland - Cities
+  { value: "dublin-ireland", label: "Dublin, Ireland", type: "city" },
+  
+  // Japan - Cities
+  { value: "tokyo-japan", label: "Tokyo, Japan", type: "city" },
+  { value: "osaka-japan", label: "Osaka, Japan", type: "city" },
+  
+  // Brazil - Cities
+  { value: "sao-paulo-brazil", label: "São Paulo, Brazil", type: "city" },
+  { value: "rio-de-janeiro-brazil", label: "Rio de Janeiro, Brazil", type: "city" },
+  
+  // UAE - Cities
+  { value: "dubai-uae", label: "Dubai, UAE", type: "city" },
+  { value: "abu-dhabi-uae", label: "Abu Dhabi, UAE", type: "city" },
+  
+  // Other major cities
+  { value: "tel-aviv-israel", label: "Tel Aviv, Israel", type: "city" },
+  { value: "zurich-switzerland", label: "Zurich, Switzerland", type: "city" },
+  { value: "stockholm-sweden", label: "Stockholm, Sweden", type: "city" },
+  { value: "copenhagen-denmark", label: "Copenhagen, Denmark", type: "city" },
+  { value: "barcelona-spain", label: "Barcelona, Spain", type: "city" },
+  { value: "madrid-spain", label: "Madrid, Spain", type: "city" },
+  { value: "lisbon-portugal", label: "Lisbon, Portugal", type: "city" },
+  { value: "hong-kong", label: "Hong Kong", type: "city" },
+  { value: "seoul-south-korea", label: "Seoul, South Korea", type: "city" },
+  { value: "beijing-china", label: "Beijing, China", type: "city" },
+  { value: "shanghai-china", label: "Shanghai, China", type: "city" },
 ];
 
 // Single select props
@@ -233,48 +124,72 @@ interface MultiSelectProps {
 
 type CountryComboboxProps = SingleSelectProps | MultiSelectProps;
 
+// Custom checkbox component matching the reference image
+const CustomCheckbox = ({ checked }: { checked: boolean }) => (
+  <div 
+    className={cn(
+      "h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
+      checked 
+        ? "bg-primary border-primary" 
+        : "border-muted-foreground/40 bg-transparent"
+    )}
+  >
+    {checked && (
+      <svg 
+        className="h-3 w-3 text-primary-foreground" 
+        fill="none" 
+        viewBox="0 0 24 24" 
+        stroke="currentColor" 
+        strokeWidth={3}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    )}
+  </div>
+);
+
 export function CountryCombobox(props: CountryComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const { placeholder = "Select location...", className, multiSelect } = props;
 
-  const filteredCountries = countries.filter((country) =>
-    country.label.toLowerCase().includes(search.toLowerCase())
+  const filteredLocations = locations.filter((location) =>
+    location.label.toLowerCase().includes(search.toLowerCase())
   );
 
   if (multiSelect) {
     const { value, onChange } = props as MultiSelectProps;
     
-    const selectedCountries = countries.filter((country) =>
+    const selectedLocations = locations.filter((location) =>
       value.some(
         (v) =>
-          country.label.toLowerCase() === v.toLowerCase() ||
-          country.value === v.toLowerCase()
+          location.label.toLowerCase() === v.toLowerCase() ||
+          location.value === v.toLowerCase()
       )
     );
 
-    const toggleCountry = (countryLabel: string) => {
+    const toggleLocation = (locationLabel: string) => {
       const isSelected = value.some(
-        (v) => v.toLowerCase() === countryLabel.toLowerCase()
+        (v) => v.toLowerCase() === locationLabel.toLowerCase()
       );
       if (isSelected) {
-        onChange(value.filter((v) => v.toLowerCase() !== countryLabel.toLowerCase()));
+        onChange(value.filter((v) => v.toLowerCase() !== locationLabel.toLowerCase()));
       } else {
-        onChange([...value, countryLabel]);
+        onChange([...value, locationLabel]);
       }
     };
 
-    const removeCountry = (countryLabel: string) => {
-      onChange(value.filter((v) => v.toLowerCase() !== countryLabel.toLowerCase()));
+    const removeLocation = (locationLabel: string) => {
+      onChange(value.filter((v) => v.toLowerCase() !== locationLabel.toLowerCase()));
     };
 
-    const isSelected = (countryLabel: string) => 
-      value.some((v) => v.toLowerCase() === countryLabel.toLowerCase());
+    const isSelected = (locationLabel: string) => 
+      value.some((v) => v.toLowerCase() === locationLabel.toLowerCase());
 
     const getDisplayText = () => {
-      if (selectedCountries.length === 0) return placeholder;
-      if (selectedCountries.length === 1) return selectedCountries[0].label;
-      return `${selectedCountries.length} locations selected`;
+      if (selectedLocations.length === 0) return placeholder;
+      if (selectedLocations.length === 1) return selectedLocations[0].label;
+      return `${selectedLocations.length} locations selected`;
     };
 
     return (
@@ -287,7 +202,7 @@ export function CountryCombobox(props: CountryComboboxProps) {
               aria-expanded={open}
               className={cn(
                 "w-full justify-between bg-background border border-border hover:bg-muted/50 text-left font-normal h-10 rounded-lg",
-                selectedCountries.length === 0 && "text-muted-foreground",
+                selectedLocations.length === 0 && "text-muted-foreground",
                 className
               )}
             >
@@ -313,25 +228,23 @@ export function CountryCombobox(props: CountryComboboxProps) {
                 />
               </div>
             </div>
-            <ScrollArea className="h-[200px]">
-              <div className="p-1">
-                {filteredCountries.length === 0 ? (
+            <ScrollArea className="h-[220px]">
+              <div className="py-1">
+                {filteredLocations.length === 0 ? (
                   <div className="py-6 text-center text-sm text-muted-foreground">
                     No location found.
                   </div>
                 ) : (
-                  filteredCountries.map((country) => (
-                    <label
-                      key={country.value}
-                      className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
+                  filteredLocations.map((location) => (
+                    <button
+                      key={location.value}
+                      type="button"
+                      onClick={() => toggleLocation(location.label)}
+                      className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-muted/80 cursor-pointer transition-colors text-left"
                     >
-                      <Checkbox
-                        checked={isSelected(country.label)}
-                        onCheckedChange={() => toggleCountry(country.label)}
-                        className="border-muted-foreground/50"
-                      />
-                      <span className="text-sm">{country.label}</span>
-                    </label>
+                      <CustomCheckbox checked={isSelected(location.label)} />
+                      <span className="text-sm">{location.label}</span>
+                    </button>
                   ))
                 )}
               </div>
@@ -339,17 +252,17 @@ export function CountryCombobox(props: CountryComboboxProps) {
           </PopoverContent>
         </Popover>
         
-        {selectedCountries.length > 0 && (
+        {selectedLocations.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {selectedCountries.map((country) => (
+            {selectedLocations.map((location) => (
               <Badge
-                key={country.value}
+                key={location.value}
                 variant="secondary"
                 className="rounded-full px-2.5 py-0.5 text-xs gap-1"
               >
-                {country.label}
+                {location.label}
                 <button
-                  onClick={() => removeCountry(country.label)}
+                  onClick={() => removeLocation(location.label)}
                   className="ml-0.5 hover:text-destructive"
                 >
                   <X className="h-3 w-3" />
@@ -365,10 +278,10 @@ export function CountryCombobox(props: CountryComboboxProps) {
   // Single select mode
   const { value, onChange } = props as SingleSelectProps;
   
-  const selectedCountry = countries.find(
-    (country) =>
-      country.label.toLowerCase() === value.toLowerCase() ||
-      country.value === value.toLowerCase()
+  const selectedLocation = locations.find(
+    (location) =>
+      location.label.toLowerCase() === value.toLowerCase() ||
+      location.value === value.toLowerCase()
   );
 
   return (
@@ -386,7 +299,7 @@ export function CountryCombobox(props: CountryComboboxProps) {
         >
           <span className="flex items-center gap-2 truncate">
             <MapPin className="h-4 w-4 shrink-0 text-primary" />
-            <span className="truncate">{selectedCountry?.label || value || placeholder}</span>
+            <span className="truncate">{selectedLocation?.label || value || placeholder}</span>
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -406,28 +319,26 @@ export function CountryCombobox(props: CountryComboboxProps) {
             />
           </div>
         </div>
-        <ScrollArea className="h-[200px]">
-          <div className="p-1">
-            {filteredCountries.length === 0 ? (
+        <ScrollArea className="h-[220px]">
+          <div className="py-1">
+            {filteredLocations.length === 0 ? (
               <div className="py-6 text-center text-sm text-muted-foreground">
                 No location found.
               </div>
             ) : (
-              filteredCountries.map((country) => (
-                <label
-                  key={country.value}
-                  className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
+              filteredLocations.map((location) => (
+                <button
+                  key={location.value}
+                  type="button"
                   onClick={() => {
-                    onChange(country.label);
+                    onChange(location.label);
                     setOpen(false);
                   }}
+                  className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-muted/80 cursor-pointer transition-colors text-left"
                 >
-                  <Checkbox
-                    checked={selectedCountry?.value === country.value}
-                    className="border-muted-foreground/50 pointer-events-none"
-                  />
-                  <span className="text-sm">{country.label}</span>
-                </label>
+                  <CustomCheckbox checked={selectedLocation?.value === location.value} />
+                  <span className="text-sm">{location.label}</span>
+                </button>
               ))
             )}
           </div>
