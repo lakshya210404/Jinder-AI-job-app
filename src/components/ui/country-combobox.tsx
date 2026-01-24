@@ -1,21 +1,16 @@
 import * as React from "react";
-import { Check, ChevronsUpDown, Globe, X } from "lucide-react";
+import { ChevronsUpDown, MapPin, X, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const countries = [
   { value: "remote", label: "Remote (Anywhere)" },
@@ -240,7 +235,12 @@ type CountryComboboxProps = SingleSelectProps | MultiSelectProps;
 
 export function CountryCombobox(props: CountryComboboxProps) {
   const [open, setOpen] = React.useState(false);
-  const { placeholder = "Select country...", className, multiSelect } = props;
+  const [search, setSearch] = React.useState("");
+  const { placeholder = "Select location...", className, multiSelect } = props;
+
+  const filteredCountries = countries.filter((country) =>
+    country.label.toLowerCase().includes(search.toLowerCase())
+  );
 
   if (multiSelect) {
     const { value, onChange } = props as MultiSelectProps;
@@ -268,6 +268,15 @@ export function CountryCombobox(props: CountryComboboxProps) {
       onChange(value.filter((v) => v.toLowerCase() !== countryLabel.toLowerCase()));
     };
 
+    const isSelected = (countryLabel: string) => 
+      value.some((v) => v.toLowerCase() === countryLabel.toLowerCase());
+
+    const getDisplayText = () => {
+      if (selectedCountries.length === 0) return placeholder;
+      if (selectedCountries.length === 1) return selectedCountries[0].label;
+      return `${selectedCountries.length} locations selected`;
+    };
+
     return (
       <div className="space-y-2">
         <Popover open={open} onOpenChange={setOpen}>
@@ -277,49 +286,56 @@ export function CountryCombobox(props: CountryComboboxProps) {
               role="combobox"
               aria-expanded={open}
               className={cn(
-                "w-full justify-between bg-secondary border-0 text-left font-normal",
+                "w-full justify-between bg-background border border-border hover:bg-muted/50 text-left font-normal h-10 rounded-lg",
                 selectedCountries.length === 0 && "text-muted-foreground",
                 className
               )}
             >
               <span className="flex items-center gap-2 truncate">
-                <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
-                {selectedCountries.length === 0
-                  ? placeholder
-                  : `${selectedCountries.length} ${selectedCountries.length === 1 ? "country" : "countries"} selected`}
+                <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                <span className="truncate">{getDisplayText()}</span>
               </span>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-popover z-50" align="start">
-            <Command>
-              <CommandInput placeholder="Search country..." />
-              <CommandList>
-                <CommandEmpty>No country found.</CommandEmpty>
-                <CommandGroup>
-                  {countries.map((country) => {
-                    const isSelected = selectedCountries.some(
-                      (c) => c.value === country.value
-                    );
-                    return (
-                      <CommandItem
-                        key={country.value}
-                        value={country.label}
-                        onSelect={() => toggleCountry(country.label)}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            isSelected ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {country.label}
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
-              </CommandList>
-            </Command>
+          <PopoverContent 
+            className="w-[--radix-popover-trigger-width] p-0 bg-popover border border-border shadow-lg rounded-lg z-50" 
+            align="start"
+          >
+            <div className="p-2 border-b border-border">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search locations..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-8 h-9 bg-muted/50 border-0"
+                />
+              </div>
+            </div>
+            <ScrollArea className="h-[200px]">
+              <div className="p-1">
+                {filteredCountries.length === 0 ? (
+                  <div className="py-6 text-center text-sm text-muted-foreground">
+                    No location found.
+                  </div>
+                ) : (
+                  filteredCountries.map((country) => (
+                    <label
+                      key={country.value}
+                      className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
+                    >
+                      <Checkbox
+                        checked={isSelected(country.label)}
+                        onCheckedChange={() => toggleCountry(country.label)}
+                        className="border-muted-foreground/50"
+                      />
+                      <span className="text-sm">{country.label}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
           </PopoverContent>
         </Popover>
         
@@ -363,47 +379,59 @@ export function CountryCombobox(props: CountryComboboxProps) {
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between bg-secondary border-0 text-left font-normal",
+            "w-full justify-between bg-background border border-border hover:bg-muted/50 text-left font-normal h-10 rounded-lg",
             !value && "text-muted-foreground",
             className
           )}
         >
           <span className="flex items-center gap-2 truncate">
-            <Globe className="h-4 w-4 shrink-0 text-muted-foreground" />
-            {selectedCountry?.label || value || placeholder}
+            <MapPin className="h-4 w-4 shrink-0 text-primary" />
+            <span className="truncate">{selectedCountry?.label || value || placeholder}</span>
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-popover z-50" align="start">
-        <Command>
-          <CommandInput placeholder="Search country..." />
-          <CommandList>
-            <CommandEmpty>No country found.</CommandEmpty>
-            <CommandGroup>
-              {countries.map((country) => (
-                <CommandItem
+      <PopoverContent 
+        className="w-[--radix-popover-trigger-width] p-0 bg-popover border border-border shadow-lg rounded-lg z-50" 
+        align="start"
+      >
+        <div className="p-2 border-b border-border">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search locations..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8 h-9 bg-muted/50 border-0"
+            />
+          </div>
+        </div>
+        <ScrollArea className="h-[200px]">
+          <div className="p-1">
+            {filteredCountries.length === 0 ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                No location found.
+              </div>
+            ) : (
+              filteredCountries.map((country) => (
+                <label
                   key={country.value}
-                  value={country.label}
-                  onSelect={() => {
+                  className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
+                  onClick={() => {
                     onChange(country.label);
                     setOpen(false);
                   }}
                 >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      selectedCountry?.value === country.value
-                        ? "opacity-100"
-                        : "opacity-0"
-                    )}
+                  <Checkbox
+                    checked={selectedCountry?.value === country.value}
+                    className="border-muted-foreground/50 pointer-events-none"
                   />
-                  {country.label}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
+                  <span className="text-sm">{country.label}</span>
+                </label>
+              ))
+            )}
+          </div>
+        </ScrollArea>
       </PopoverContent>
     </Popover>
   );
