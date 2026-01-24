@@ -8,3 +8,21 @@ verify_jwt = false
 
 [functions.scrape-job]
 verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.check-subscription]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false
+
+[functions.job-ingestion]
+verify_jwt = false
+
+[functions.job-classify]
+verify_jwt = false
+
+[functions.job-verify]
+verify_jwt = false
