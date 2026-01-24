@@ -1,4 +1,4 @@
-import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, Sparkles } from "lucide-react";
+import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, Sparkles, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
@@ -15,6 +15,9 @@ export interface JobData {
   requirements: string[] | null;
   logo_url: string | null;
   created_at: string;
+  apply_url?: string | null;
+  source?: string | null;
+  posted_date?: string | null;
 }
 
 interface JobListCardProps {
@@ -109,28 +112,42 @@ export function JobListCard({
 
       {/* Actions */}
       <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
-        <Button
-          onClick={() => onApply?.(job.id)}
-          className="rounded-full px-6"
-        >
-          Apply Now
-        </Button>
+        {job.apply_url ? (
+          <Button
+            asChild
+            className="rounded-full px-6"
+          >
+            <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
+              Apply
+              <ExternalLink className="h-4 w-4 ml-1.5" />
+            </a>
+          </Button>
+        ) : (
+          <Button
+            onClick={() => onApply?.(job.id)}
+            className="rounded-full px-6"
+          >
+            Apply Now
+          </Button>
+        )}
         <Button
           variant="outline"
           size="icon"
           className="rounded-full"
           onClick={() => onGenerateResume?.(job)}
+          title="Generate tailored resume"
         >
-          <Sparkles className="h-4 w-4" />
+          <Sparkles className="h-4 w-4 text-orange" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
           className="rounded-full ml-auto"
           onClick={() => onSave?.(job.id)}
+          title={isSaved ? "Remove from saved" : "Save job"}
         >
           {isSaved ? (
-            <BookmarkCheck className="h-5 w-5 text-primary" />
+            <BookmarkCheck className="h-5 w-5 text-pink" />
           ) : (
             <Bookmark className="h-5 w-5" />
           )}

@@ -16,43 +16,52 @@ export type Database = {
     Tables: {
       jobs: {
         Row: {
+          apply_url: string | null
           company: string
           created_at: string
           description: string
           id: string
           location: string
           logo_url: string | null
+          posted_date: string | null
           requirements: string[] | null
           salary_max: number | null
           salary_min: number | null
+          source: string | null
           title: string
           updated_at: string
           work_type: string
         }
         Insert: {
+          apply_url?: string | null
           company: string
           created_at?: string
           description: string
           id?: string
           location: string
           logo_url?: string | null
+          posted_date?: string | null
           requirements?: string[] | null
           salary_max?: number | null
           salary_min?: number | null
+          source?: string | null
           title: string
           updated_at?: string
           work_type?: string
         }
         Update: {
+          apply_url?: string | null
           company?: string
           created_at?: string
           description?: string
           id?: string
           location?: string
           logo_url?: string | null
+          posted_date?: string | null
           requirements?: string[] | null
           salary_max?: number | null
           salary_min?: number | null
+          source?: string | null
           title?: string
           updated_at?: string
           work_type?: string
