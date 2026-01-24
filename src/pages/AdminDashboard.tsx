@@ -251,7 +251,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleToggleStatus = async (id: string, status: string) => {
+  const handleToggleStatus = async (id: string, status: "active" | "paused" | "failing" | "disabled") => {
     try {
       await updateStatus.mutateAsync({ id, status });
       toast.success(`Source ${status === "active" ? "activated" : "paused"}`);
