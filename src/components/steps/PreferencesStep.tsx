@@ -1,6 +1,7 @@
 import { MapPin, DollarSign, Clock } from "lucide-react";
 import { Label } from "../ui/label";
 import { cn } from "@/lib/utils";
+import { CountryCombobox } from "../ui/country-combobox";
 
 interface PreferencesStepProps {
   data: {
@@ -11,7 +12,6 @@ interface PreferencesStepProps {
   onChange: (data: { location: string; salary: string; workType: string }) => void;
 }
 
-const locations = ["Remote", "New York", "San Francisco", "London", "Berlin"];
 const salaries = ["$50K-80K", "$80K-120K", "$120K-150K", "$150K+"];
 const workTypes = ["Full-time", "Part-time", "Contract", "Freelance"];
 
@@ -36,22 +36,11 @@ export const PreferencesStep = ({ data, onChange }: PreferencesStepProps) => {
             <MapPin className="w-4 h-4 text-primary" />
             Preferred Location
           </Label>
-          <div className="flex flex-wrap gap-2">
-            {locations.map((loc) => (
-              <button
-                key={loc}
-                onClick={() => onChange({ ...data, location: loc })}
-                className={cn(
-                  "px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                  data.location === loc
-                    ? "gradient-button text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground hover:bg-muted"
-                )}
-              >
-                {loc}
-              </button>
-            ))}
-          </div>
+          <CountryCombobox
+            value={data.location}
+            onChange={(location) => onChange({ ...data, location })}
+            placeholder="Select your preferred country..."
+          />
         </div>
         
         <div className="space-y-3">
