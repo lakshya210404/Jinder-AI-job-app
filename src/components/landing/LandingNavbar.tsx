@@ -22,7 +22,7 @@ export function LandingNavbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <JinderLogo size="sm" />
-            <span className="font-bold text-xl text-foreground">Jinder</span>
+            <span className="font-bold text-xl text-foreground">-AI</span>
           </Link>
 
           {/* Desktop nav */}
@@ -49,15 +49,8 @@ export function LandingNavbar() {
           </div>
 
           {/* Mobile menu button */}
-          <button
-            className="md:hidden p-2"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
+          <button className="md:hidden p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
       </div>
@@ -66,7 +59,7 @@ export function LandingNavbar() {
       <div
         className={cn(
           "md:hidden absolute top-16 left-0 right-0 bg-background border-b border-border transition-all duration-200 overflow-hidden",
-          mobileMenuOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0"
+          mobileMenuOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0",
         )}
       >
         <nav className="flex flex-col p-4 gap-2">
@@ -82,10 +75,14 @@ export function LandingNavbar() {
           ))}
           <div className="border-t border-border my-2" />
           <Button variant="ghost" asChild className="justify-start">
-            <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Log in</Link>
+            <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+              Log in
+            </Link>
           </Button>
           <Button asChild>
-            <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Get started free</Link>
+            <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+              Get started free
+            </Link>
           </Button>
         </nav>
       </div>
