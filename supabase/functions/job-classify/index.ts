@@ -146,16 +146,36 @@ Extract the following using the suggest_classification function.`;
 }
 
 // =============================================
-// CRON SECRET VALIDATION
+// AUTH VALIDATION (CRON_SECRET or ANON_KEY for pg_cron)
 // =============================================
-function validateCronSecret(req: Request): boolean {
-  const cronSecret = Deno.env.get("CRON_SECRET");
-  if (!cronSecret) {
-    log("warn", "CRON_SECRET not configured");
+function validateAuth(req: Request): boolean {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return false;
   }
-  const authHeader = req.headers.get("Authorization");
-  return authHeader === `Bearer ${cronSecret}`;
+  
+  const token = authHeader.replace("Bearer ", "");
+  
+  // Check CRON_SECRET
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  if (cronSecret && token === cronSecret) {
+    return true;
+  }
+  
+  // Check service role key
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (serviceRoleKey && token === serviceRoleKey) {
+    return true;
+  }
+  
+  // Check anon key (for pg_cron internal calls)
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (anonKey && token === anonKey) {
+    log("info", "Authenticated via anon key (pg_cron)");
+    return true;
+  }
+  
+  return false;
 }
 
 // =============================================
@@ -166,9 +186,9 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Validate CRON_SECRET for automated calls
-  if (!validateCronSecret(req)) {
-    log("warn", "Unauthorized request - invalid CRON_SECRET");
+  // Validate auth for automated calls
+  if (!validateAuth(req)) {
+    log("warn", "Unauthorized request");
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 401,
