@@ -131,12 +131,8 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="border-t border-border mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Jinder. All rights reserved.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Made with ❤️ for job seekers everywhere
-          </p>
+          <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Jinder. All rights reserved.</p>
+          <p className="text-sm text-muted-foreground">Made for job seekers everywhere</p>
         </div>
       </div>
     </footer>
