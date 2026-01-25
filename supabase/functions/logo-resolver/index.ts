@@ -109,9 +109,29 @@ async function resolveLogo(company: string, applyUrl?: string, atsLogoUrl?: stri
   return { logo_url: ddgFavicon, source: "favicon", domain };
 }
 
+// Validate CRON_SECRET for automated calls
+function validateCronSecret(req: Request): boolean {
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  if (!cronSecret) {
+    console.warn("CRON_SECRET not configured");
+    return false;
+  }
+  const authHeader = req.headers.get("Authorization");
+  return authHeader === `Bearer ${cronSecret}`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Validate CRON_SECRET for automated calls
+  if (!validateCronSecret(req)) {
+    console.warn("Unauthorized request - invalid CRON_SECRET");
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 401,
+    });
   }
 
   try {
