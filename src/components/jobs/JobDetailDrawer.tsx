@@ -292,15 +292,23 @@ export function JobDetailDrawer({
               </div>
             </div>
 
-            {/* Source */}
-            <div className="pt-4 flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">
-                Source: {isExternalJob ? 'Web Search' : 'Database'}
-              </p>
-              {scrapeResult?.cached && (
-                <p className="text-xs text-muted-foreground">
-                  Cached
+            {/* Source & Apply Info */}
+            <div className="pt-4 border-t border-border">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <p>
+                  Source: <span className="capitalize font-medium">{job.source || (isExternalJob ? 'Web Search' : 'Database')}</span>
                 </p>
+                {job.apply_url && (
+                  <p className="text-right">
+                    Apply via {job.apply_url.includes('greenhouse') ? 'Greenhouse' : 
+                              job.apply_url.includes('lever') ? 'Lever' : 
+                              job.apply_url.includes('workday') ? 'Workday' : 
+                              job.apply_url.includes('ashby') ? 'Ashby' : 'Company Site'}
+                  </p>
+                )}
+              </div>
+              {scrapeResult?.cached && (
+                <p className="text-xs text-muted-foreground mt-1">Cached</p>
               )}
             </div>
           </div>
