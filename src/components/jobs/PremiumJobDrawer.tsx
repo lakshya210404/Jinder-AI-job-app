@@ -91,6 +91,7 @@ export function PremiumJobDrawer({
             <CompanyLogo 
               logoUrl={job.logo_url}
               companyLogoUrl={job.company_logo_url}
+              companyDomain={job.company_domain}
               company={job.company}
               size="lg"
             />

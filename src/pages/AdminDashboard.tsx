@@ -13,7 +13,8 @@ import {
   Shield,
   TrendingUp,
   Loader2,
-  Zap
+  Zap,
+  Image
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -25,6 +26,7 @@ import {
   useTriggerIngestion,
   useTriggerClassification,
   useTriggerVerification,
+  useTriggerLogoResolver,
   useUpdateSourceStatus,
   useJobStats,
   type JobSource,
@@ -198,6 +200,7 @@ export default function AdminDashboard() {
   const triggerIngestion = useTriggerIngestion();
   const triggerClassification = useTriggerClassification();
   const triggerVerification = useTriggerVerification();
+  const triggerLogoResolver = useTriggerLogoResolver();
   const updateStatus = useUpdateSourceStatus();
 
   const handleTriggerSource = async (sourceId: string) => {
@@ -251,6 +254,19 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleTriggerLogos = async () => {
+    try {
+      const result = await triggerLogoResolver.mutateAsync({ batch_size: 200 });
+      toast.success("Logo resolution complete", {
+        description: `${result.successCount}/${result.processed} logos resolved`,
+      });
+    } catch (err) {
+      toast.error("Logo resolution failed", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  };
+
   const handleToggleStatus = async (id: string, status: "active" | "paused" | "failing" | "disabled") => {
     try {
       await updateStatus.mutateAsync({ id, status });
@@ -284,6 +300,15 @@ export default function AdminDashboard() {
           </div>
           
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTriggerLogos}
+              disabled={triggerLogoResolver.isPending}
+            >
+              {triggerLogoResolver.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Image className="h-4 w-4 mr-2" />}
+              Fix Logos
+            </Button>
             <Button
               variant="outline"
               size="sm"
