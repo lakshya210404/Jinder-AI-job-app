@@ -39,7 +39,7 @@ export default function Jobs() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth");
+      navigate("/");
     }
   }, [user, authLoading, navigate]);
 
