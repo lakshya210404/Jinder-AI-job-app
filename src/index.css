@@ -164,6 +164,24 @@
   .animate-flame-glow {
     animation: flame-glow 1.5s ease-in-out infinite;
   }
+
+  .animate-new-glow {
+    animation: new-glow 2s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s linear infinite;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.1), transparent);
+    background-size: 200% 100%;
+  }
+
+  .job-card-hover {
+    @apply transition-all duration-300;
+  }
+
+  .job-card-hover:hover {
+    @apply -translate-y-1 shadow-xl shadow-primary/5;
+  }
 }
 
 @keyframes fade-in {
@@ -218,5 +236,23 @@
   }
   50% {
     filter: brightness(1.1) drop-shadow(0 0 8px hsl(211 100% 50% / 0.6));
+  }
+}
+
+@keyframes new-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 hsl(var(--color-green) / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px 4px hsl(var(--color-green) / 0.2);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
   }
 }
