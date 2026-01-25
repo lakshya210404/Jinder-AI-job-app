@@ -8,11 +8,11 @@ const corsHeaders = {
 
 interface LogoResult {
   logo_url: string | null;
-  source: "clearbit" | "favicon" | "ats" | "manual" | "fallback";
+  logo_storage_url: string | null;
+  source: "clearbit" | "favicon" | "ats" | "manual" | "fallback" | "storage";
   domain: string | null;
 }
 
-// Logging helper
 const log = (level: string, message: string, details?: Record<string, unknown>) => {
   const timestamp = new Date().toISOString();
   console.log(JSON.stringify({ timestamp, level, message, ...details }));
@@ -20,11 +20,9 @@ const log = (level: string, message: string, details?: Record<string, unknown>) 
 
 // Extract domain from company name or URL
 function extractDomain(company: string, applyUrl?: string): string | null {
-  // Try to extract from apply URL first
   if (applyUrl) {
     try {
       const url = new URL(applyUrl);
-      // Skip job board domains - extract company domain from path if possible
       const jobBoards = [
         "greenhouse.io", "boards.greenhouse.io",
         "lever.co", "jobs.lever.co",
@@ -41,111 +39,46 @@ function extractDomain(company: string, applyUrl?: string): string | null {
     }
   }
   
-  // Known company domain mappings
   const knownDomains: Record<string, string> = {
-    "stripe": "stripe.com",
-    "coinbase": "coinbase.com",
-    "airbnb": "airbnb.com",
-    "anthropic": "anthropic.com",
-    "vercel": "vercel.com",
-    "figma": "figma.com",
-    "linear": "linear.app",
-    "notion": "notion.so",
-    "openai": "openai.com",
-    "google": "google.com",
-    "meta": "meta.com",
-    "facebook": "meta.com",
-    "apple": "apple.com",
-    "amazon": "amazon.com",
-    "microsoft": "microsoft.com",
-    "netflix": "netflix.com",
-    "spotify": "spotify.com",
-    "uber": "uber.com",
-    "lyft": "lyft.com",
-    "doordash": "doordash.com",
-    "instacart": "instacart.com",
-    "slack": "slack.com",
-    "discord": "discord.com",
-    "github": "github.com",
-    "gitlab": "gitlab.com",
-    "atlassian": "atlassian.com",
-    "dropbox": "dropbox.com",
-    "salesforce": "salesforce.com",
-    "adobe": "adobe.com",
-    "nvidia": "nvidia.com",
-    "amd": "amd.com",
-    "intel": "intel.com",
-    "qualcomm": "qualcomm.com",
-    "snap": "snap.com",
-    "snapchat": "snap.com",
-    "pinterest": "pinterest.com",
-    "reddit": "reddit.com",
-    "twitter": "x.com",
-    "x": "x.com",
-    "tiktok": "tiktok.com",
-    "bytedance": "bytedance.com",
-    "shopify": "shopify.com",
-    "square": "squareup.com",
-    "block": "block.xyz",
-    "robinhood": "robinhood.com",
-    "plaid": "plaid.com",
-    "brex": "brex.com",
-    "ramp": "ramp.com",
-    "datadog": "datadoghq.com",
-    "snowflake": "snowflake.com",
-    "databricks": "databricks.com",
-    "mongodb": "mongodb.com",
-    "elastic": "elastic.co",
-    "twilio": "twilio.com",
-    "cloudflare": "cloudflare.com",
-    "airtable": "airtable.com",
-    "asana": "asana.com",
-    "monday": "monday.com",
-    "zoom": "zoom.us",
-    "webex": "webex.com",
-    "cisco": "cisco.com",
-    "ibm": "ibm.com",
-    "oracle": "oracle.com",
-    "sap": "sap.com",
-    "workday": "workday.com",
-    "servicenow": "servicenow.com",
-    "palantir": "palantir.com",
-    "crowdstrike": "crowdstrike.com",
-    "palo alto networks": "paloaltonetworks.com",
-    "okta": "okta.com",
-    "docusign": "docusign.com",
-    "zendesk": "zendesk.com",
-    "hubspot": "hubspot.com",
-    "mailchimp": "mailchimp.com",
-    "intercom": "intercom.com",
-    "amplitude": "amplitude.com",
-    "mixpanel": "mixpanel.com",
-    "segment": "segment.com",
-    "contentful": "contentful.com",
-    "sanity": "sanity.io",
-    "supabase": "supabase.com",
-    "netlify": "netlify.com",
-    "heroku": "heroku.com",
-    "render": "render.com",
-    "deno": "deno.com",
-    "bun": "bun.sh",
+    "stripe": "stripe.com", "coinbase": "coinbase.com", "airbnb": "airbnb.com",
+    "anthropic": "anthropic.com", "vercel": "vercel.com", "figma": "figma.com",
+    "linear": "linear.app", "notion": "notion.so", "openai": "openai.com",
+    "google": "google.com", "meta": "meta.com", "facebook": "meta.com",
+    "apple": "apple.com", "amazon": "amazon.com", "microsoft": "microsoft.com",
+    "netflix": "netflix.com", "spotify": "spotify.com", "uber": "uber.com",
+    "lyft": "lyft.com", "doordash": "doordash.com", "instacart": "instacart.com",
+    "slack": "slack.com", "discord": "discord.com", "github": "github.com",
+    "gitlab": "gitlab.com", "atlassian": "atlassian.com", "dropbox": "dropbox.com",
+    "salesforce": "salesforce.com", "adobe": "adobe.com", "nvidia": "nvidia.com",
+    "amd": "amd.com", "intel": "intel.com", "qualcomm": "qualcomm.com",
+    "snap": "snap.com", "snapchat": "snap.com", "pinterest": "pinterest.com",
+    "reddit": "reddit.com", "twitter": "x.com", "x": "x.com",
+    "tiktok": "tiktok.com", "bytedance": "bytedance.com", "shopify": "shopify.com",
+    "square": "squareup.com", "block": "block.xyz", "robinhood": "robinhood.com",
+    "plaid": "plaid.com", "brex": "brex.com", "ramp": "ramp.com",
+    "datadog": "datadoghq.com", "snowflake": "snowflake.com", "databricks": "databricks.com",
+    "mongodb": "mongodb.com", "elastic": "elastic.co", "twilio": "twilio.com",
+    "cloudflare": "cloudflare.com", "airtable": "airtable.com", "asana": "asana.com",
+    "monday": "monday.com", "zoom": "zoom.us", "webex": "webex.com",
+    "cisco": "cisco.com", "ibm": "ibm.com", "oracle": "oracle.com",
+    "sap": "sap.com", "workday": "workday.com", "servicenow": "servicenow.com",
+    "palantir": "palantir.com", "crowdstrike": "crowdstrike.com",
+    "palo alto networks": "paloaltonetworks.com", "okta": "okta.com",
+    "docusign": "docusign.com", "zendesk": "zendesk.com", "hubspot": "hubspot.com",
+    "mailchimp": "mailchimp.com", "intercom": "intercom.com", "amplitude": "amplitude.com",
+    "mixpanel": "mixpanel.com", "segment": "segment.com", "contentful": "contentful.com",
+    "sanity": "sanity.io", "supabase": "supabase.com", "netlify": "netlify.com",
+    "heroku": "heroku.com", "render": "render.com", "deno": "deno.com", "bun": "bun.sh",
   };
   
   const companyLower = company.toLowerCase().trim();
-  if (knownDomains[companyLower]) {
-    return knownDomains[companyLower];
-  }
+  if (knownDomains[companyLower]) return knownDomains[companyLower];
   
-  // Try partial match
   for (const [key, domain] of Object.entries(knownDomains)) {
-    if (companyLower.includes(key) || key.includes(companyLower)) {
-      return domain;
-    }
+    if (companyLower.includes(key) || key.includes(companyLower)) return domain;
   }
   
-  // Clean company name and guess domain
-  const cleaned = company
-    .toLowerCase()
+  const cleaned = company.toLowerCase()
     .replace(/[^a-z0-9\s]/g, "")
     .replace(/\s+(inc|llc|corp|corporation|ltd|limited|co|company|technologies|labs|studios|group|holdings)$/i, "")
     .trim()
@@ -154,7 +87,56 @@ function extractDomain(company: string, applyUrl?: string): string | null {
   return cleaned ? `${cleaned}.com` : null;
 }
 
-// Try Clearbit Logo API (free tier)
+// Download logo and upload to Supabase Storage
+async function downloadAndStoreLogo(
+  supabase: any,
+  logoUrl: string,
+  domain: string
+): Promise<string | null> {
+  try {
+    const response = await fetch(logoUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; LogoResolver/1.0)" }
+    });
+    
+    if (!response.ok) return null;
+    
+    const contentType = response.headers.get("content-type") || "image/png";
+    const arrayBuffer = await response.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    
+    // Skip tiny images (likely 1x1 tracking pixels)
+    if (uint8Array.length < 500) return null;
+    
+    const extension = contentType.includes("svg") ? "svg" : 
+                     contentType.includes("png") ? "png" : 
+                     contentType.includes("webp") ? "webp" : "jpg";
+    const fileName = `${domain.replace(/\./g, "_")}.${extension}`;
+    
+    const { error: uploadError } = await supabase.storage
+      .from("job-logos")
+      .upload(fileName, uint8Array, {
+        contentType,
+        upsert: true,
+      });
+    
+    if (uploadError) {
+      log("warn", "Failed to upload logo to storage", { domain, error: uploadError.message });
+      return null;
+    }
+    
+    const { data: { publicUrl } } = supabase.storage
+      .from("job-logos")
+      .getPublicUrl(fileName);
+    
+    log("info", "Logo stored in Supabase Storage", { domain, fileName, publicUrl });
+    return publicUrl;
+  } catch (error) {
+    log("warn", "Failed to download logo", { logoUrl, error: String(error) });
+    return null;
+  }
+}
+
+// Try Clearbit Logo API
 async function tryClearbit(domain: string): Promise<string | null> {
   const url = `https://logo.clearbit.com/${domain}`;
   try {
@@ -184,82 +166,107 @@ async function tryGoogleFavicon(domain: string): Promise<string | null> {
   return null;
 }
 
-// Try DuckDuckGo favicon service
+// DuckDuckGo favicon service
 function getDuckDuckGoFavicon(domain: string): string {
   return `https://icons.duckduckgo.com/ip3/${domain}.ico`;
 }
 
-// Resolve logo with fallback chain
-async function resolveLogo(company: string, applyUrl?: string, atsLogoUrl?: string): Promise<LogoResult> {
+// Check if a URL returns a valid image
+async function isValidLogo(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url, { method: "HEAD" });
+    if (!response.ok) return false;
+    const contentType = response.headers.get("content-type") || "";
+    return contentType.includes("image");
+  } catch {
+    return false;
+  }
+}
+
+// Resolve logo with fallback chain and storage
+async function resolveLogo(
+  supabase: any,
+  company: string,
+  applyUrl?: string,
+  atsLogoUrl?: string,
+  checkBroken = false
+): Promise<LogoResult> {
   const domain = extractDomain(company, applyUrl);
   
-  log("info", "Resolving logo", { company, domain, applyUrl: applyUrl?.slice(0, 50), atsLogoUrl });
+  log("info", "Resolving logo", { company, domain, checkBroken });
   
   // 1. Check ATS-provided logo first
   if (atsLogoUrl && atsLogoUrl.startsWith("http")) {
-    try {
-      const response = await fetch(atsLogoUrl, { method: "HEAD" });
-      if (response.ok) {
-        return { logo_url: atsLogoUrl, source: "ats", domain };
-      }
-    } catch {
-      // ATS logo failed
+    if (await isValidLogo(atsLogoUrl)) {
+      const storageUrl = domain ? await downloadAndStoreLogo(supabase, atsLogoUrl, domain) : null;
+      return { 
+        logo_url: atsLogoUrl, 
+        logo_storage_url: storageUrl,
+        source: storageUrl ? "storage" : "ats", 
+        domain 
+      };
     }
   }
   
   if (!domain) {
     log("warn", "Could not determine domain", { company });
-    return { logo_url: null, source: "fallback", domain: null };
+    return { logo_url: null, logo_storage_url: null, source: "fallback", domain: null };
   }
   
   // 2. Try Clearbit (highest quality)
   const clearbitLogo = await tryClearbit(domain);
   if (clearbitLogo) {
-    return { logo_url: clearbitLogo, source: "clearbit", domain };
+    const storageUrl = await downloadAndStoreLogo(supabase, clearbitLogo, domain);
+    return { 
+      logo_url: clearbitLogo, 
+      logo_storage_url: storageUrl,
+      source: storageUrl ? "storage" : "clearbit", 
+      domain 
+    };
   }
   
-  // 3. Try Google favicon (usually reliable)
+  // 3. Try Google favicon
   const googleFavicon = await tryGoogleFavicon(domain);
   if (googleFavicon) {
-    return { logo_url: googleFavicon, source: "favicon", domain };
+    const storageUrl = await downloadAndStoreLogo(supabase, googleFavicon, domain);
+    return { 
+      logo_url: googleFavicon, 
+      logo_storage_url: storageUrl,
+      source: storageUrl ? "storage" : "favicon", 
+      domain 
+    };
   }
   
-  // 4. DuckDuckGo as final fallback (always returns something)
+  // 4. DuckDuckGo as final fallback
   const ddgFavicon = getDuckDuckGoFavicon(domain);
-  return { logo_url: ddgFavicon, source: "favicon", domain };
+  return { logo_url: ddgFavicon, logo_storage_url: null, source: "favicon", domain };
 }
 
-// Validate CRON_SECRET for automated calls
-function validateCronSecret(req: Request): boolean {
+// Validate auth
+async function validateAuth(req: Request, supabaseUrl: string, supabaseKey: string): Promise<boolean> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) return false;
+  
+  const token = authHeader.replace("Bearer ", "");
+  
   const cronSecret = Deno.env.get("CRON_SECRET");
-  if (!cronSecret) {
-    log("warn", "CRON_SECRET not configured");
-    return false;
-  }
-  const authHeader = req.headers.get("Authorization");
-  return authHeader === `Bearer ${cronSecret}`;
-}
-
-// Validate service role key for admin calls
-function validateServiceRole(req: Request): boolean {
+  if (cronSecret && token === cronSecret) return true;
+  
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!serviceRoleKey) {
-    return false;
-  }
-  const authHeader = req.headers.get("Authorization");
-  return authHeader === `Bearer ${serviceRoleKey}`;
-}
-
-// Validate authenticated user (any logged-in user can trigger logo resolution)
-async function validateUser(req: Request): Promise<boolean> {
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return false;
+  if (serviceRoleKey && token === serviceRoleKey) return true;
+  
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (anonKey && token === anonKey) return true;
+  
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (!error && user) return true;
+  } catch {
+    // JWT validation failed
   }
   
-  // For now, allow any Bearer token (user auth will be validated by Supabase client)
-  // This is safe because the function only reads/updates the jobs table
-  return true;
+  return false;
 }
 
 serve(async (req) => {
@@ -267,50 +274,44 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Temporarily allow all requests for logo backfill
-  // TODO: Re-enable auth after initial logo resolution
-  log("info", "Logo resolver request received");
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  
+  // Validate auth
+  if (!await validateAuth(req, supabaseUrl, supabaseKey)) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { job_id, company, apply_url, logo_url: atsLogoUrl, batch_size = 100 } = await req.json();
+    const { job_id, company, apply_url, logo_url: atsLogoUrl, batch_size = 100, check_broken = false } = await req.json();
     
-    log("info", "Logo resolver called", { job_id, company, batch_size });
+    log("info", "Logo resolver called", { job_id, company, batch_size, check_broken });
     
     // Single job resolution
     if (job_id && company) {
-      const result = await resolveLogo(company, apply_url, atsLogoUrl);
+      const result = await resolveLogo(supabase, company, apply_url, atsLogoUrl, check_broken);
       
-      // Update job with logo
-      const { error: updateError } = await supabase
-        .from("jobs")
-        .update({
-          company_logo_url: result.logo_url,
-          company_domain: result.domain,
-          logo_source: result.source,
-          logo_last_verified_at: new Date().toISOString(),
-        })
-        .eq("id", job_id);
+      await supabase.from("jobs").update({
+        company_logo_url: result.logo_storage_url || result.logo_url,
+        logo_storage_url: result.logo_storage_url,
+        company_domain: result.domain,
+        logo_source: result.source,
+        logo_last_verified_at: new Date().toISOString(),
+      }).eq("id", job_id);
       
-      if (updateError) {
-        log("error", "Failed to update job logo", { job_id, error: updateError.message });
-        throw updateError;
-      }
-      
-      // Cache in company_logos table
       if (result.domain) {
-        await supabase
-          .from("company_logos")
-          .upsert({
-            domain: result.domain,
-            company_name: company,
-            logo_url: result.logo_url,
-            source: result.source,
-            verified_at: new Date().toISOString(),
-          }, { onConflict: "domain" });
+        await supabase.from("company_logos").upsert({
+          domain: result.domain,
+          company_name: company,
+          logo_url: result.logo_storage_url || result.logo_url,
+          source: result.source,
+          verified_at: new Date().toISOString(),
+        }, { onConflict: "domain" });
       }
       
       return new Response(JSON.stringify({ success: true, result }), {
@@ -318,25 +319,41 @@ serve(async (req) => {
       });
     }
     
-    // Batch resolution for jobs without logos
-    const { data: jobsWithoutLogos, error: fetchError } = await supabase
+    // Batch resolution
+    let query = supabase
       .from("jobs")
-      .select("id, company, apply_url, logo_url")
-      .is("company_logo_url", null)
+      .select("id, company, apply_url, logo_url, logo_storage_url, company_logo_url")
       .order("created_at", { ascending: false })
       .limit(batch_size);
     
-    if (fetchError) {
-      throw fetchError;
+    if (check_broken) {
+      // Check jobs with logos that might be broken
+      query = query.not("company_logo_url", "is", null);
+    } else {
+      // Only jobs missing logos
+      query = query.or("company_logo_url.is.null,logo_storage_url.is.null");
     }
     
-    log("info", `Found ${jobsWithoutLogos?.length || 0} jobs without logos`);
+    const { data: jobsToProcess, error: fetchError } = await query;
+    
+    if (fetchError) throw fetchError;
+    
+    log("info", `Found ${jobsToProcess?.length || 0} jobs to process`);
     
     let successCount = 0;
     let errorCount = 0;
+    let skippedCount = 0;
     
-    for (const job of jobsWithoutLogos || []) {
+    for (const job of jobsToProcess || []) {
       try {
+        // If checking broken logos, verify existing logo first
+        if (check_broken && job.logo_storage_url) {
+          if (await isValidLogo(job.logo_storage_url)) {
+            skippedCount++;
+            continue; // Logo is fine
+          }
+        }
+        
         // Check cache first
         const domain = extractDomain(job.company, job.apply_url);
         if (domain) {
@@ -344,18 +361,16 @@ serve(async (req) => {
             .from("company_logos")
             .select("logo_url, source")
             .eq("domain", domain)
-            .single();
+            .maybeSingle();
           
-          if (cached && cached.logo_url) {
-            await supabase
-              .from("jobs")
-              .update({
-                company_logo_url: cached.logo_url,
-                company_domain: domain,
-                logo_source: cached.source,
-                logo_last_verified_at: new Date().toISOString(),
-              })
-              .eq("id", job.id);
+          if (cached?.logo_url && !check_broken) {
+            await supabase.from("jobs").update({
+              company_logo_url: cached.logo_url,
+              logo_storage_url: cached.logo_url.includes("supabase") ? cached.logo_url : null,
+              company_domain: domain,
+              logo_source: cached.source,
+              logo_last_verified_at: new Date().toISOString(),
+            }).eq("id", job.id);
             
             successCount++;
             continue;
@@ -363,34 +378,27 @@ serve(async (req) => {
         }
         
         // Resolve and update
-        const result = await resolveLogo(job.company, job.apply_url, job.logo_url);
+        const result = await resolveLogo(supabase, job.company, job.apply_url, job.logo_url, check_broken);
         
-        await supabase
-          .from("jobs")
-          .update({
-            company_logo_url: result.logo_url,
-            company_domain: result.domain,
-            logo_source: result.source,
-            logo_last_verified_at: new Date().toISOString(),
-          })
-          .eq("id", job.id);
+        await supabase.from("jobs").update({
+          company_logo_url: result.logo_storage_url || result.logo_url,
+          logo_storage_url: result.logo_storage_url,
+          company_domain: result.domain,
+          logo_source: result.source,
+          logo_last_verified_at: new Date().toISOString(),
+        }).eq("id", job.id);
         
-        // Cache the result
         if (result.domain) {
-          await supabase
-            .from("company_logos")
-            .upsert({
-              domain: result.domain,
-              company_name: job.company,
-              logo_url: result.logo_url,
-              source: result.source,
-              verified_at: new Date().toISOString(),
-            }, { onConflict: "domain" });
+          await supabase.from("company_logos").upsert({
+            domain: result.domain,
+            company_name: job.company,
+            logo_url: result.logo_storage_url || result.logo_url,
+            source: result.source,
+            verified_at: new Date().toISOString(),
+          }, { onConflict: "domain" });
         }
         
         successCount++;
-        
-        // Small delay to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 50));
       } catch (err) {
         log("error", `Failed to resolve logo for job ${job.id}`, { error: String(err) });
@@ -398,13 +406,14 @@ serve(async (req) => {
       }
     }
     
-    log("info", "Logo resolution complete", { successCount, errorCount, processed: jobsWithoutLogos?.length || 0 });
+    log("info", "Logo resolution complete", { successCount, errorCount, skippedCount, processed: jobsToProcess?.length || 0 });
     
     return new Response(JSON.stringify({
       success: true,
-      processed: jobsWithoutLogos?.length || 0,
+      processed: jobsToProcess?.length || 0,
       successCount,
       errorCount,
+      skippedCount,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

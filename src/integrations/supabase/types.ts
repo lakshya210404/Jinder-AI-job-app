@@ -188,6 +188,8 @@ export type Database = {
           jobs_expired: number | null
           jobs_fetched: number | null
           jobs_new: number | null
+          jobs_seen: number | null
+          jobs_stale: number | null
           jobs_updated: number | null
           raw_response_sample: Json | null
           source_id: string | null
@@ -205,6 +207,8 @@ export type Database = {
           jobs_expired?: number | null
           jobs_fetched?: number | null
           jobs_new?: number | null
+          jobs_seen?: number | null
+          jobs_stale?: number | null
           jobs_updated?: number | null
           raw_response_sample?: Json | null
           source_id?: string | null
@@ -222,6 +226,8 @@ export type Database = {
           jobs_expired?: number | null
           jobs_fetched?: number | null
           jobs_new?: number | null
+          jobs_seen?: number | null
+          jobs_stale?: number | null
           jobs_updated?: number | null
           raw_response_sample?: Json | null
           source_id?: string | null
@@ -231,6 +237,86 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ingestion_logs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "job_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ingestion_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          duration_ms: number | null
+          error_count: number | null
+          error_message: string | null
+          id: string
+          jobs_deduplicated: number | null
+          jobs_expired: number | null
+          jobs_fetched: number | null
+          jobs_new: number | null
+          jobs_seen: number | null
+          jobs_stale: number | null
+          jobs_unchanged: number | null
+          jobs_updated: number | null
+          run_type: string
+          sample_expired_job_ids: string[] | null
+          sample_new_job_ids: string[] | null
+          sample_updated_job_ids: string[] | null
+          source_id: string | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_count?: number | null
+          error_message?: string | null
+          id?: string
+          jobs_deduplicated?: number | null
+          jobs_expired?: number | null
+          jobs_fetched?: number | null
+          jobs_new?: number | null
+          jobs_seen?: number | null
+          jobs_stale?: number | null
+          jobs_unchanged?: number | null
+          jobs_updated?: number | null
+          run_type?: string
+          sample_expired_job_ids?: string[] | null
+          sample_new_job_ids?: string[] | null
+          sample_updated_job_ids?: string[] | null
+          source_id?: string | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_count?: number | null
+          error_message?: string | null
+          id?: string
+          jobs_deduplicated?: number | null
+          jobs_expired?: number | null
+          jobs_fetched?: number | null
+          jobs_new?: number | null
+          jobs_seen?: number | null
+          jobs_stale?: number | null
+          jobs_unchanged?: number | null
+          jobs_updated?: number | null
+          run_type?: string
+          sample_expired_job_ids?: string[] | null
+          sample_new_job_ids?: string[] | null
+          sample_updated_job_ids?: string[] | null
+          source_id?: string | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingestion_runs_source_id_fkey"
             columns: ["source_id"]
             isOneToOne: false
             referencedRelation: "job_sources"
@@ -306,11 +392,17 @@ export type Database = {
           company_slug: string | null
           consecutive_failures: number | null
           created_at: string
+          failure_count_24h: number | null
           id: string
           is_priority_source: boolean | null
+          jobs_added_24h: number | null
+          jobs_expired_24h: number | null
+          jobs_seen_24h: number | null
+          jobs_updated_24h: number | null
           last_error_message: string | null
           last_failure_at: string | null
           last_poll_at: string | null
+          last_stats_computed_at: string | null
           last_success_at: string | null
           logo_url: string | null
           name: string
@@ -319,6 +411,7 @@ export type Database = {
           reliability_score: number | null
           source_type: Database["public"]["Enums"]["job_source_type"]
           status: Database["public"]["Enums"]["source_status"]
+          success_count_24h: number | null
           tags: string[] | null
           total_jobs_ingested: number | null
           updated_at: string
@@ -331,11 +424,17 @@ export type Database = {
           company_slug?: string | null
           consecutive_failures?: number | null
           created_at?: string
+          failure_count_24h?: number | null
           id?: string
           is_priority_source?: boolean | null
+          jobs_added_24h?: number | null
+          jobs_expired_24h?: number | null
+          jobs_seen_24h?: number | null
+          jobs_updated_24h?: number | null
           last_error_message?: string | null
           last_failure_at?: string | null
           last_poll_at?: string | null
+          last_stats_computed_at?: string | null
           last_success_at?: string | null
           logo_url?: string | null
           name: string
@@ -344,6 +443,7 @@ export type Database = {
           reliability_score?: number | null
           source_type: Database["public"]["Enums"]["job_source_type"]
           status?: Database["public"]["Enums"]["source_status"]
+          success_count_24h?: number | null
           tags?: string[] | null
           total_jobs_ingested?: number | null
           updated_at?: string
@@ -356,11 +456,17 @@ export type Database = {
           company_slug?: string | null
           consecutive_failures?: number | null
           created_at?: string
+          failure_count_24h?: number | null
           id?: string
           is_priority_source?: boolean | null
+          jobs_added_24h?: number | null
+          jobs_expired_24h?: number | null
+          jobs_seen_24h?: number | null
+          jobs_updated_24h?: number | null
           last_error_message?: string | null
           last_failure_at?: string | null
           last_poll_at?: string | null
+          last_stats_computed_at?: string | null
           last_success_at?: string | null
           logo_url?: string | null
           name?: string
@@ -369,6 +475,7 @@ export type Database = {
           reliability_score?: number | null
           source_type?: Database["public"]["Enums"]["job_source_type"]
           status?: Database["public"]["Enums"]["source_status"]
+          success_count_24h?: number | null
           tags?: string[] | null
           total_jobs_ingested?: number | null
           updated_at?: string
@@ -447,6 +554,8 @@ export type Database = {
           competition_score: number | null
           created_at: string
           description: string
+          description_raw: string | null
+          description_text: string | null
           education_requirements: string | null
           experience_level_parsed: string | null
           external_job_id: string | null
@@ -458,10 +567,12 @@ export type Database = {
           is_trending: boolean | null
           is_verified: boolean | null
           job_hash: string | null
+          last_seen_at: string | null
           last_verified_at: string | null
           location: string
           logo_last_verified_at: string | null
           logo_source: string | null
+          logo_storage_url: string | null
           logo_url: string | null
           overall_rank_score: number | null
           posted_date: string | null
@@ -500,6 +611,8 @@ export type Database = {
           competition_score?: number | null
           created_at?: string
           description: string
+          description_raw?: string | null
+          description_text?: string | null
           education_requirements?: string | null
           experience_level_parsed?: string | null
           external_job_id?: string | null
@@ -511,10 +624,12 @@ export type Database = {
           is_trending?: boolean | null
           is_verified?: boolean | null
           job_hash?: string | null
+          last_seen_at?: string | null
           last_verified_at?: string | null
           location: string
           logo_last_verified_at?: string | null
           logo_source?: string | null
+          logo_storage_url?: string | null
           logo_url?: string | null
           overall_rank_score?: number | null
           posted_date?: string | null
@@ -553,6 +668,8 @@ export type Database = {
           competition_score?: number | null
           created_at?: string
           description?: string
+          description_raw?: string | null
+          description_text?: string | null
           education_requirements?: string | null
           experience_level_parsed?: string | null
           external_job_id?: string | null
@@ -564,10 +681,12 @@ export type Database = {
           is_trending?: boolean | null
           is_verified?: boolean | null
           job_hash?: string | null
+          last_seen_at?: string | null
           last_verified_at?: string | null
           location?: string
           logo_last_verified_at?: string | null
           logo_source?: string | null
+          logo_storage_url?: string | null
           logo_url?: string | null
           overall_rank_score?: number | null
           posted_date?: string | null
@@ -1092,6 +1211,7 @@ export type Database = {
     }
     Functions: {
       calculate_freshness_rank: { Args: { posted: string }; Returns: number }
+      compute_source_stats: { Args: never; Returns: undefined }
       generate_job_hash: {
         Args: {
           p_apply_url: string

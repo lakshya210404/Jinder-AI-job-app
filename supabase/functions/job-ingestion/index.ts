@@ -20,6 +20,8 @@ interface NormalizedJob {
   company: string;
   location: string;
   description: string;
+  description_raw: string; // Original HTML/markdown
+  description_text: string; // Sanitized plain text
   requirements: string[];
   work_type: string;
   is_remote: boolean;
@@ -38,7 +40,15 @@ interface IngestionResult {
   jobs_fetched: number;
   jobs_new: number;
   jobs_updated: number;
+  jobs_unchanged: number;
+  jobs_seen: number;
   jobs_deduplicated: number;
+  jobs_stale: number;
+  jobs_expired: number;
+  error_count: number;
+  sample_new_job_ids: string[];
+  sample_updated_job_ids: string[];
+  sample_expired_job_ids: string[];
   error?: string;
 }
 
@@ -48,6 +58,28 @@ interface JobSource {
   company_name: string;
   api_endpoint: string | null;
   logo_url: string | null;
+}
+
+// =============================================
+// HTML SANITIZATION
+// =============================================
+function sanitizeHtml(html: string): string {
+  // Remove script tags and their content
+  let clean = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+  // Remove style tags and their content
+  clean = clean.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "");
+  // Remove all HTML tags but preserve content
+  clean = clean.replace(/<[^>]*>/g, " ");
+  // Normalize whitespace
+  clean = clean.replace(/\s+/g, " ").trim();
+  // Decode common HTML entities
+  clean = clean.replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ");
+  return clean;
 }
 
 // =============================================
@@ -116,7 +148,6 @@ function generateJobHash(title: string, company: string, location: string, apply
     .map(s => (s || "").toLowerCase().trim())
     .join("|");
   
-  // Simple hash function for edge runtime
   let hash = 0;
   for (let i = 0; i < input.length; i++) {
     const char = input.charCodeAt(i);
@@ -145,14 +176,17 @@ async function fetchGreenhouseJobs(apiEndpoint: string, companyName: string, log
   
   for (const job of data.jobs || []) {
     const location = job.location?.name || "Unknown";
-    const description = job.content || "";
-    const { work_type, is_remote } = classifyWorkType(location, job.title, description);
+    const descriptionRaw = job.content || "";
+    const descriptionText = sanitizeHtml(descriptionRaw);
+    const { work_type, is_remote } = classifyWorkType(location, job.title, descriptionText);
     
     jobs.push({
       title: job.title || "Untitled",
       company: companyName,
       location,
-      description: description.replace(/<[^>]*>/g, " ").trim(),
+      description: descriptionText.slice(0, 5000),
+      description_raw: descriptionRaw.slice(0, 50000),
+      description_text: descriptionText.slice(0, 10000),
       requirements: [],
       work_type,
       is_remote,
@@ -163,8 +197,8 @@ async function fetchGreenhouseJobs(apiEndpoint: string, companyName: string, log
       salary_max: null,
       salary_currency: null,
       logo_url: logoUrl,
-      tech_stack: extractTechStack(description),
-      role_type: classifyRoleType(job.title, description),
+      tech_stack: extractTechStack(descriptionText),
+      role_type: classifyRoleType(job.title, descriptionText),
     });
   }
   
@@ -191,8 +225,9 @@ async function fetchLeverJobs(apiEndpoint: string, companyName: string, logoUrl:
   
   for (const job of data || []) {
     const location = job.categories?.location || "Unknown";
-    const description = job.descriptionPlain || job.description || "";
-    const { work_type, is_remote } = classifyWorkType(location, job.text, description);
+    const descriptionRaw = job.description || "";
+    const descriptionPlain = job.descriptionPlain || sanitizeHtml(descriptionRaw);
+    const { work_type, is_remote } = classifyWorkType(location, job.text, descriptionPlain);
     
     const additionalLists = job.lists || [];
     const requirements: string[] = [];
@@ -206,7 +241,9 @@ async function fetchLeverJobs(apiEndpoint: string, companyName: string, logoUrl:
       title: job.text || "Untitled",
       company: companyName,
       location,
-      description: description.replace(/<[^>]*>/g, " ").trim(),
+      description: descriptionPlain.slice(0, 5000),
+      description_raw: descriptionRaw.slice(0, 50000),
+      description_text: descriptionPlain.slice(0, 10000),
       requirements: requirements.slice(0, 10),
       work_type,
       is_remote,
@@ -217,8 +254,8 @@ async function fetchLeverJobs(apiEndpoint: string, companyName: string, logoUrl:
       salary_max: null,
       salary_currency: null,
       logo_url: logoUrl,
-      tech_stack: extractTechStack(description),
-      role_type: classifyRoleType(job.text, description),
+      tech_stack: extractTechStack(descriptionPlain),
+      role_type: classifyRoleType(job.text, descriptionPlain),
     });
   }
   
@@ -227,14 +264,43 @@ async function fetchLeverJobs(apiEndpoint: string, companyName: string, logoUrl:
 }
 
 // =============================================
-// INGESTION ORCHESTRATOR
+// EXTRACT DOMAIN FOR LOGO
+// =============================================
+function extractDomain(company: string, applyUrl: string): string | null {
+  const knownDomains: Record<string, string> = {
+    "stripe": "stripe.com", "coinbase": "coinbase.com", "airbnb": "airbnb.com",
+    "anthropic": "anthropic.com", "vercel": "vercel.com", "figma": "figma.com",
+    "notion": "notion.so", "openai": "openai.com", "google": "google.com",
+    "meta": "meta.com", "apple": "apple.com", "amazon": "amazon.com",
+    "microsoft": "microsoft.com", "netflix": "netflix.com", "spotify": "spotify.com",
+    "uber": "uber.com", "lyft": "lyft.com", "doordash": "doordash.com",
+    "instacart": "instacart.com", "slack": "slack.com", "discord": "discord.com",
+    "github": "github.com", "gitlab": "gitlab.com", "dropbox": "dropbox.com",
+    "salesforce": "salesforce.com", "adobe": "adobe.com", "nvidia": "nvidia.com",
+    "pinterest": "pinterest.com", "reddit": "reddit.com", "snap": "snap.com",
+    "shopify": "shopify.com", "robinhood": "robinhood.com", "plaid": "plaid.com",
+    "brex": "brex.com", "ramp": "ramp.com", "datadog": "datadoghq.com",
+    "snowflake": "snowflake.com", "databricks": "databricks.com", "mongodb": "mongodb.com",
+    "cloudflare": "cloudflare.com", "twilio": "twilio.com", "airtable": "airtable.com",
+    "supabase": "supabase.com", "linear": "linear.app", "retool": "retool.com",
+  };
+  const companyLower = company.toLowerCase().trim();
+  if (knownDomains[companyLower]) return knownDomains[companyLower];
+  for (const [key, domain] of Object.entries(knownDomains)) {
+    if (companyLower.includes(key)) return domain;
+  }
+  return company.toLowerCase().replace(/[^a-z0-9]/g, "") + ".com";
+}
+
+// =============================================
+// INGESTION ORCHESTRATOR WITH RECONCILIATION
 // =============================================
 async function ingestSource(
   supabaseUrl: string,
   supabaseKey: string,
-  source: JobSource
+  source: JobSource,
+  runStartedAt: Date
 ): Promise<IngestionResult> {
-  // Create fresh client for each source to avoid type issues
   const supabase = createClient(supabaseUrl, supabaseKey, { 
     auth: { persistSession: false },
     db: { schema: "public" }
@@ -245,7 +311,15 @@ async function ingestSource(
     jobs_fetched: 0,
     jobs_new: 0,
     jobs_updated: 0,
+    jobs_unchanged: 0,
+    jobs_seen: 0,
     jobs_deduplicated: 0,
+    jobs_stale: 0,
+    jobs_expired: 0,
+    error_count: 0,
+    sample_new_job_ids: [],
+    sample_updated_job_ids: [],
+    sample_expired_job_ids: [],
   };
   
   try {
@@ -267,65 +341,38 @@ async function ingestSource(
     }
     
     result.jobs_fetched = normalizedJobs.length;
+    const seenJobIds: string[] = [];
     
     for (const job of normalizedJobs) {
       const jobHash = generateJobHash(job.title, job.company, job.location, job.apply_url);
       
-      // Check for existing job by hash using raw query approach
-      const { data: existingJobs } = await supabase
+      // Check for existing job by external_job_id first (most reliable)
+      const { data: existingById } = await supabase
         .from("jobs")
-        .select("id, external_job_id, source_id")
-        .eq("job_hash", jobHash)
-        .limit(1);
-      
-      const existingByHash = existingJobs?.[0];
-      
-      if (existingByHash) {
-        if (existingByHash.source_id === source.id) {
-          await supabase
-            .from("jobs")
-            .update({
-              title: job.title,
-              description: job.description,
-              requirements: job.requirements,
-              work_type: job.work_type,
-              is_remote: job.is_remote,
-              apply_url: job.apply_url,
-              posted_date: job.posted_date,
-              salary_min: job.salary_min,
-              salary_max: job.salary_max,
-              salary_currency: job.salary_currency,
-              tech_stack: job.tech_stack,
-              role_type: job.role_type,
-              verification_status: "pending",
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", existingByHash.id);
-          
-          result.jobs_updated++;
-        } else {
-          result.jobs_deduplicated++;
-        }
-        continue;
-      }
-      
-      // Check by external ID
-      const { data: existingByIdJobs } = await supabase
-        .from("jobs")
-        .select("id")
+        .select("id, job_hash, description")
         .eq("source_id", source.id)
         .eq("external_job_id", job.external_job_id)
-        .limit(1);
-      
-      const existingById = existingByIdJobs?.[0];
+        .maybeSingle();
       
       if (existingById) {
-        await supabase
-          .from("jobs")
-          .update({
+        seenJobIds.push(existingById.id);
+        
+        // Check if content changed
+        const contentChanged = existingById.description !== job.description;
+        
+        const updateData: Record<string, unknown> = {
+          last_seen_at: new Date().toISOString(),
+          verification_status: "verified_active",
+          updated_at: new Date().toISOString(),
+        };
+        
+        if (contentChanged) {
+          Object.assign(updateData, {
             job_hash: jobHash,
             title: job.title,
             description: job.description,
+            description_raw: job.description_raw,
+            description_text: job.description_text,
             requirements: job.requirements,
             work_type: job.work_type,
             is_remote: job.is_remote,
@@ -333,62 +380,59 @@ async function ingestSource(
             posted_date: job.posted_date,
             tech_stack: job.tech_stack,
             role_type: job.role_type,
-            verification_status: "pending",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", existingById.id);
+            // Reset AI classification when content changes
+            ai_classification_done: false,
+          });
+        }
         
-        result.jobs_updated++;
+        await supabase.from("jobs").update(updateData).eq("id", existingById.id);
+        
+        if (contentChanged) {
+          result.jobs_updated++;
+          if (result.sample_updated_job_ids.length < 10) {
+            result.sample_updated_job_ids.push(existingById.id);
+          }
+        } else {
+          result.jobs_unchanged++;
+        }
+        result.jobs_seen++;
         continue;
       }
       
-      // Insert new job with logo resolution
-      // Try to resolve logo from known domains
-      let companyLogoUrl: string | null = null;
-      let companyDomain: string | null = null;
-      let logoSource = "fallback";
+      // Check by hash for cross-source deduplication
+      const { data: existingByHash } = await supabase
+        .from("jobs")
+        .select("id, source_id")
+        .eq("job_hash", jobHash)
+        .maybeSingle();
       
-      // Extract domain from company or apply URL
-      const extractDomain = (company: string, applyUrl: string): string | null => {
-        // Known company mappings
-        const knownDomains: Record<string, string> = {
-          "stripe": "stripe.com", "coinbase": "coinbase.com", "airbnb": "airbnb.com",
-          "anthropic": "anthropic.com", "vercel": "vercel.com", "figma": "figma.com",
-          "notion": "notion.so", "openai": "openai.com", "google": "google.com",
-          "meta": "meta.com", "apple": "apple.com", "amazon": "amazon.com",
-          "microsoft": "microsoft.com", "netflix": "netflix.com", "spotify": "spotify.com",
-          "uber": "uber.com", "lyft": "lyft.com", "doordash": "doordash.com",
-          "instacart": "instacart.com", "slack": "slack.com", "discord": "discord.com",
-          "github": "github.com", "gitlab": "gitlab.com", "dropbox": "dropbox.com",
-          "salesforce": "salesforce.com", "adobe": "adobe.com", "nvidia": "nvidia.com",
-          "pinterest": "pinterest.com", "reddit": "reddit.com", "snap": "snap.com",
-          "shopify": "shopify.com", "robinhood": "robinhood.com", "plaid": "plaid.com",
-          "brex": "brex.com", "ramp": "ramp.com", "datadog": "datadoghq.com",
-          "snowflake": "snowflake.com", "databricks": "databricks.com", "mongodb": "mongodb.com",
-          "cloudflare": "cloudflare.com", "twilio": "twilio.com", "airtable": "airtable.com",
-          "supabase": "supabase.com", "linear": "linear.app", "retool": "retool.com",
-        };
-        const companyLower = company.toLowerCase().trim();
-        if (knownDomains[companyLower]) return knownDomains[companyLower];
-        for (const [key, domain] of Object.entries(knownDomains)) {
-          if (companyLower.includes(key)) return domain;
+      if (existingByHash) {
+        if (existingByHash.source_id === source.id) {
+          // Same source, update last_seen_at
+          await supabase.from("jobs").update({
+            last_seen_at: new Date().toISOString(),
+            verification_status: "verified_active",
+            external_job_id: job.external_job_id,
+          }).eq("id", existingByHash.id);
+          seenJobIds.push(existingByHash.id);
+          result.jobs_seen++;
+        } else {
+          result.jobs_deduplicated++;
         }
-        // Fallback: clean company name
-        return company.toLowerCase().replace(/[^a-z0-9]/g, "") + ".com";
-      };
-      
-      companyDomain = extractDomain(job.company, job.apply_url);
-      if (companyDomain) {
-        // Use Clearbit logo URL (reliable and fast)
-        companyLogoUrl = `https://logo.clearbit.com/${companyDomain}`;
-        logoSource = "clearbit";
+        continue;
       }
       
-      await supabase.from("jobs").insert({
+      // Insert new job
+      const companyDomain = extractDomain(job.company, job.apply_url);
+      const companyLogoUrl = companyDomain ? `https://logo.clearbit.com/${companyDomain}` : null;
+      
+      const { data: insertedJob } = await supabase.from("jobs").insert({
         title: job.title,
         company: job.company,
         location: job.location,
         description: job.description,
+        description_raw: job.description_raw,
+        description_text: job.description_text,
         requirements: job.requirements,
         work_type: job.work_type,
         is_remote: job.is_remote,
@@ -402,43 +446,83 @@ async function ingestSource(
         logo_url: job.logo_url,
         company_logo_url: companyLogoUrl,
         company_domain: companyDomain,
-        logo_source: logoSource,
+        logo_source: "clearbit",
         logo_last_verified_at: new Date().toISOString(),
         tech_stack: job.tech_stack,
         role_type: job.role_type,
         source_id: source.id,
         source: source.source_type,
         first_seen_at: new Date().toISOString(),
-        verification_status: "pending",
+        last_seen_at: new Date().toISOString(),
+        verification_status: "verified_active",
         ai_classification_done: false,
-      });
+      }).select("id").maybeSingle();
       
       result.jobs_new++;
+      result.jobs_seen++;
+      if (insertedJob && result.sample_new_job_ids.length < 10) {
+        result.sample_new_job_ids.push(insertedJob.id);
+        seenJobIds.push(insertedJob.id);
+      }
+    }
+    
+    // RECONCILIATION: Mark jobs not seen in this run
+    // Jobs from this source that weren't seen become stale after 24h or expired after 72h
+    const { data: unseenJobs } = await supabase
+      .from("jobs")
+      .select("id, last_seen_at, verification_status")
+      .eq("source_id", source.id)
+      .lt("last_seen_at", runStartedAt.toISOString())
+      .in("verification_status", ["pending", "verified_active", "stale"]);
+    
+    for (const job of unseenJobs || []) {
+      const lastSeen = new Date(job.last_seen_at);
+      const hoursSinceLastSeen = (Date.now() - lastSeen.getTime()) / (1000 * 60 * 60);
+      
+      let newStatus = job.verification_status;
+      if (hoursSinceLastSeen > 72) {
+        newStatus = "expired";
+        result.jobs_expired++;
+        if (result.sample_expired_job_ids.length < 10) {
+          result.sample_expired_job_ids.push(job.id);
+        }
+      } else if (hoursSinceLastSeen > 24) {
+        newStatus = "stale";
+        result.jobs_stale++;
+      }
+      
+      if (newStatus !== job.verification_status) {
+        await supabase.from("jobs").update({
+          verification_status: newStatus,
+        }).eq("id", job.id);
+      }
     }
     
     const durationMs = Date.now() - startTime;
     
-    await supabase
-      .from("job_sources")
-      .update({
-        last_poll_at: new Date().toISOString(),
-        last_success_at: new Date().toISOString(),
-        next_poll_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-        consecutive_failures: 0,
-        status: "active",
-        active_job_count: result.jobs_fetched,
-      })
-      .eq("id", source.id);
+    // Update source stats
+    await supabase.from("job_sources").update({
+      last_poll_at: new Date().toISOString(),
+      last_success_at: new Date().toISOString(),
+      next_poll_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+      consecutive_failures: 0,
+      status: "active",
+      active_job_count: result.jobs_fetched,
+    }).eq("id", source.id);
     
+    // Log to ingestion_logs
     await supabase.from("ingestion_logs").insert({
       source_id: source.id,
-      started_at: new Date(startTime).toISOString(),
+      started_at: runStartedAt.toISOString(),
       completed_at: new Date().toISOString(),
       duration_ms: durationMs,
       jobs_fetched: result.jobs_fetched,
       jobs_new: result.jobs_new,
       jobs_updated: result.jobs_updated,
       jobs_deduplicated: result.jobs_deduplicated,
+      jobs_expired: result.jobs_expired,
+      jobs_seen: result.jobs_seen,
+      jobs_stale: result.jobs_stale,
       success: true,
     });
     
@@ -451,22 +535,20 @@ async function ingestSource(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     result.error = errorMessage;
+    result.error_count++;
     
     const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
     
-    await supabase
-      .from("job_sources")
-      .update({
-        last_poll_at: new Date().toISOString(),
-        last_failure_at: new Date().toISOString(),
-        last_error_message: errorMessage,
-        status: "failing",
-      })
-      .eq("id", source.id);
+    await supabase.from("job_sources").update({
+      last_poll_at: new Date().toISOString(),
+      last_failure_at: new Date().toISOString(),
+      last_error_message: errorMessage,
+      status: "failing",
+    }).eq("id", source.id);
     
     await supabase.from("ingestion_logs").insert({
       source_id: source.id,
-      started_at: new Date(startTime).toISOString(),
+      started_at: runStartedAt.toISOString(),
       completed_at: new Date().toISOString(),
       duration_ms: Date.now() - startTime,
       jobs_fetched: 0,
@@ -485,7 +567,7 @@ async function ingestSource(
 }
 
 // =============================================
-// AUTH VALIDATION (CRON, Service Role, Anon Key, or User JWT)
+// AUTH VALIDATION
 // =============================================
 async function validateAuth(req: Request, supabaseUrl: string, supabaseKey: string): Promise<boolean> {
   const authHeader = req.headers.get("Authorization");
@@ -495,28 +577,24 @@ async function validateAuth(req: Request, supabaseUrl: string, supabaseKey: stri
   
   const token = authHeader.replace("Bearer ", "");
   
-  // Check CRON_SECRET
   const cronSecret = Deno.env.get("CRON_SECRET");
   if (cronSecret && token === cronSecret) {
     log("info", "Authenticated via CRON_SECRET");
     return true;
   }
   
-  // Check service role key
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (serviceRoleKey && token === serviceRoleKey) {
     log("info", "Authenticated via service role key");
     return true;
   }
   
-  // Check anon key (for pg_cron internal calls)
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
   if (anonKey && token === anonKey) {
     log("info", "Authenticated via anon key (pg_cron)");
     return true;
   }
   
-  // Try to validate as a user JWT
   try {
     const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
     const { data: { user }, error } = await supabase.auth.getUser(token);
@@ -542,7 +620,6 @@ serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   
-  // Validate auth for automated calls
   if (!await validateAuth(req, supabaseUrl, supabaseKey)) {
     log("warn", "Unauthorized request");
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -556,10 +633,11 @@ serve(async (req) => {
   });
   
   try {
-    log("info", "Job ingestion pipeline started");
+    const runStartedAt = new Date();
+    log("info", "Job ingestion pipeline started", { run_started_at: runStartedAt.toISOString() });
     
     const body = await req.json().catch(() => ({}));
-    const { source_id, source_type, limit = 10 } = body;
+    const { source_id, source_type, limit = 10, run_type = "scheduled" } = body;
     
     let query = supabase
       .from("job_sources")
@@ -600,7 +678,7 @@ serve(async (req) => {
     const results: Array<{ source_id: string; company: string; result: IngestionResult }> = [];
     
     for (const source of sources) {
-      const result = await ingestSource(supabaseUrl, supabaseKey, source as JobSource);
+      const result = await ingestSource(supabaseUrl, supabaseKey, source as JobSource, runStartedAt);
       results.push({
         source_id: source.id,
         company: source.company_name,
@@ -610,14 +688,42 @@ serve(async (req) => {
       await new Promise(resolve => setTimeout(resolve, 500));
     }
     
+    // Aggregate stats
     const totalNew = results.reduce((sum, r) => sum + r.result.jobs_new, 0);
     const totalUpdated = results.reduce((sum, r) => sum + r.result.jobs_updated, 0);
+    const totalSeen = results.reduce((sum, r) => sum + r.result.jobs_seen, 0);
+    const totalStale = results.reduce((sum, r) => sum + r.result.jobs_stale, 0);
+    const totalExpired = results.reduce((sum, r) => sum + r.result.jobs_expired, 0);
     const totalErrors = results.filter(r => r.result.error).length;
+    
+    // Create run record
+    await supabase.from("ingestion_runs").insert({
+      source_id: source_id || null,
+      run_type: source_id ? "manual" : run_type,
+      started_at: runStartedAt.toISOString(),
+      completed_at: new Date().toISOString(),
+      duration_ms: Date.now() - runStartedAt.getTime(),
+      status: totalErrors === sources.length ? "failed" : "success",
+      jobs_fetched: results.reduce((sum, r) => sum + r.result.jobs_fetched, 0),
+      jobs_new: totalNew,
+      jobs_updated: totalUpdated,
+      jobs_seen: totalSeen,
+      jobs_stale: totalStale,
+      jobs_expired: totalExpired,
+      jobs_deduplicated: results.reduce((sum, r) => sum + r.result.jobs_deduplicated, 0),
+      error_count: totalErrors,
+      sample_new_job_ids: results.flatMap(r => r.result.sample_new_job_ids).slice(0, 20),
+      sample_updated_job_ids: results.flatMap(r => r.result.sample_updated_job_ids).slice(0, 20),
+      sample_expired_job_ids: results.flatMap(r => r.result.sample_expired_job_ids).slice(0, 20),
+    });
     
     log("info", "Job ingestion pipeline complete", { 
       sources_processed: sources.length,
       total_new: totalNew,
       total_updated: totalUpdated,
+      total_seen: totalSeen,
+      total_stale: totalStale,
+      total_expired: totalExpired,
       errors: totalErrors
     });
     
@@ -626,6 +732,9 @@ serve(async (req) => {
       sources_processed: sources.length,
       total_new: totalNew,
       total_updated: totalUpdated,
+      total_seen: totalSeen,
+      total_stale: totalStale,
+      total_expired: totalExpired,
       errors: totalErrors,
       results,
     }), {
