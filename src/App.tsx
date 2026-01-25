@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { SplashScreen } from "@/components/SplashScreen";
+import Landing from "./pages/Landing";
 import Jobs from "./pages/Jobs";
 import SavedJobs from "./pages/SavedJobs";
 import Applications from "./pages/Applications";
@@ -48,7 +49,8 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Jobs />} />
+              <Route path="/" element={<Landing />} />
+              <Route path="/jobs" element={<Jobs />} />
               <Route path="/saved" element={<SavedJobs />} />
               <Route path="/applications" element={<Applications />} />
               <Route path="/resume" element={<ResumeBuilder />} />
