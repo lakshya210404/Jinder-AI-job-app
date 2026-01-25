@@ -22,7 +22,7 @@ export function LandingNavbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <JinderLogo size="sm" />
-            <span className="font-bold text-xl text-foreground">-AI</span>
+            <span className="font-bold text-xl text-foreground">- Job App</span>
           </Link>
 
           {/* Desktop nav */}
