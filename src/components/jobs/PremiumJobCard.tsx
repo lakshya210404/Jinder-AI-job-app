@@ -55,7 +55,78 @@ const tagColors = [
   "bg-gradient-to-r from-green/20 to-green/10 text-green border-green/30",
 ];
 
-// Company logo component with fallback
+// Known company domain mappings for reliable logo resolution
+const knownDomains: Record<string, string> = {
+  "openai": "openai.com",
+  "stripe": "stripe.com",
+  "coinbase": "coinbase.com",
+  "airbnb": "airbnb.com",
+  "anthropic": "anthropic.com",
+  "vercel": "vercel.com",
+  "figma": "figma.com",
+  "notion": "notion.so",
+  "google": "google.com",
+  "meta": "meta.com",
+  "apple": "apple.com",
+  "amazon": "amazon.com",
+  "microsoft": "microsoft.com",
+  "netflix": "netflix.com",
+  "spotify": "spotify.com",
+  "uber": "uber.com",
+  "slack": "slack.com",
+  "discord": "discord.com",
+  "github": "github.com",
+  "gitlab": "gitlab.com",
+  "dropbox": "dropbox.com",
+  "salesforce": "salesforce.com",
+  "adobe": "adobe.com",
+  "nvidia": "nvidia.com",
+  "snap": "snap.com",
+  "pinterest": "pinterest.com",
+  "reddit": "reddit.com",
+  "shopify": "shopify.com",
+  "plaid": "plaid.com",
+  "brex": "brex.com",
+  "ramp": "ramp.com",
+  "datadog": "datadoghq.com",
+  "cloudflare": "cloudflare.com",
+  "airtable": "airtable.com",
+  "supabase": "supabase.com",
+  "netlify": "netlify.com",
+  "linear": "linear.app",
+  "twilio": "twilio.com",
+  "mongodb": "mongodb.com",
+  "snowflake": "snowflake.com",
+  "databricks": "databricks.com",
+  "zoom": "zoom.us",
+  "hubspot": "hubspot.com",
+  "amplitude": "amplitude.com",
+  "mixpanel": "mixpanel.com",
+};
+
+// Get domain from company name
+function getDomainFromCompany(company: string): string | null {
+  const companyLower = company.toLowerCase().trim();
+  
+  // Check known domains first
+  for (const [key, domain] of Object.entries(knownDomains)) {
+    if (companyLower.includes(key) || key.includes(companyLower.replace(/\s+/g, ""))) {
+      return domain;
+    }
+  }
+  
+  // Generate a guess
+  const cleaned = company
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+(inc|llc|corp|ltd|co|labs|technologies)$/i, "")
+    .trim()
+    .replace(/\s+/g, "");
+  
+  return cleaned ? `${cleaned}.com` : null;
+}
+
+// Company logo component with robust fallback chain
 function CompanyLogo({ 
   logoUrl, 
   companyLogoUrl,
@@ -71,8 +142,8 @@ function CompanyLogo({
   size?: "sm" | "md" | "lg";
   className?: string;
 }) {
-  const [imageError, setImageError] = useState(false);
-  const [fallbackAttempted, setFallbackAttempted] = useState(false);
+  const [currentSourceIndex, setCurrentSourceIndex] = useState(0);
+  const [hasError, setHasError] = useState(false);
   
   const sizeClasses = {
     sm: "w-10 h-10 text-sm",
@@ -80,33 +151,29 @@ function CompanyLogo({
     lg: "w-16 h-16 text-xl",
   };
   
-  // Try multiple logo sources in order
-  const getLogoUrl = (): string | null => {
-    // 1. Use provided company_logo_url if available
-    if (companyLogoUrl) return companyLogoUrl;
-    
-    // 2. Use provided logo_url if available
-    if (logoUrl) return logoUrl;
-    
-    // 3. Try Clearbit with company domain
-    if (companyDomain && !fallbackAttempted) {
-      return `https://logo.clearbit.com/${companyDomain}`;
-    }
-    
-    // 4. Try to generate domain from company name and use Clearbit
-    if (!fallbackAttempted) {
-      const guessedDomain = company
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, "")
-        .slice(0, 20) + ".com";
-      return `https://logo.clearbit.com/${guessedDomain}`;
-    }
-    
-    return null;
-  };
+  // Build list of logo URLs to try in order
+  const resolvedDomain = companyDomain || getDomainFromCompany(company);
   
-  const displayUrl = getLogoUrl();
-  const showFallback = !displayUrl || (imageError && fallbackAttempted);
+  const logoSources: string[] = [];
+  
+  // 1. Stored company_logo_url
+  if (companyLogoUrl) logoSources.push(companyLogoUrl);
+  
+  // 2. Stored logo_url
+  if (logoUrl) logoSources.push(logoUrl);
+  
+  // 3. Clearbit with resolved domain
+  if (resolvedDomain) {
+    logoSources.push(`https://logo.clearbit.com/${resolvedDomain}`);
+  }
+  
+  // 4. Google Favicon (high-res)
+  if (resolvedDomain) {
+    logoSources.push(`https://www.google.com/s2/favicons?domain=${resolvedDomain}&sz=128`);
+  }
+  
+  const currentUrl = logoSources[currentSourceIndex];
+  const showFallback = hasError || !currentUrl;
   
   // Generate initials from company name
   const initials = company
@@ -127,11 +194,11 @@ function CompanyLogo({
   const colorIndex = company.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
   
   const handleImageError = () => {
-    if (!fallbackAttempted) {
-      setFallbackAttempted(true);
-      setImageError(true);
+    // Try next source in the chain
+    if (currentSourceIndex < logoSources.length - 1) {
+      setCurrentSourceIndex(prev => prev + 1);
     } else {
-      setImageError(true);
+      setHasError(true);
     }
   };
   
@@ -144,9 +211,9 @@ function CompanyLogo({
         className
       )}
     >
-      {!showFallback && displayUrl ? (
+      {!showFallback && currentUrl ? (
         <img 
-          src={displayUrl} 
+          src={currentUrl} 
           alt={`${company} logo`}
           className="w-full h-full object-contain p-1.5"
           onError={handleImageError}
