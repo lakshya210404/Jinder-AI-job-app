@@ -440,11 +440,33 @@ async function ingestSource(
 }
 
 // =============================================
+// CRON SECRET VALIDATION
+// =============================================
+function validateCronSecret(req: Request): boolean {
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  if (!cronSecret) {
+    log("warn", "CRON_SECRET not configured");
+    return false;
+  }
+  const authHeader = req.headers.get("Authorization");
+  return authHeader === `Bearer ${cronSecret}`;
+}
+
+// =============================================
 // MAIN HANDLER
 // =============================================
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+  
+  // Validate CRON_SECRET for automated calls
+  if (!validateCronSecret(req)) {
+    log("warn", "Unauthorized request - invalid CRON_SECRET");
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 401,
+    });
   }
   
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
