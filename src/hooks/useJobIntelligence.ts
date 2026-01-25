@@ -136,6 +136,24 @@ export function useTriggerVerification() {
   });
 }
 
+export function useTriggerLogoResolver() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params?: { job_id?: string; batch_size?: number }) => {
+      const { data, error } = await supabase.functions.invoke("logo-resolver", {
+        body: params || { batch_size: 200 },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+    },
+  });
+}
+
 export function useUpdateSourceStatus() {
   const queryClient = useQueryClient();
 

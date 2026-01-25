@@ -59,17 +59,20 @@ const tagColors = [
 function CompanyLogo({ 
   logoUrl, 
   companyLogoUrl,
+  companyDomain,
   company, 
   size = "md",
   className 
 }: { 
   logoUrl?: string | null; 
   companyLogoUrl?: string | null;
+  companyDomain?: string | null;
   company: string; 
   size?: "sm" | "md" | "lg";
   className?: string;
 }) {
   const [imageError, setImageError] = useState(false);
+  const [fallbackAttempted, setFallbackAttempted] = useState(false);
   
   const sizeClasses = {
     sm: "w-10 h-10 text-sm",
@@ -77,8 +80,33 @@ function CompanyLogo({
     lg: "w-16 h-16 text-xl",
   };
   
-  const displayUrl = companyLogoUrl || logoUrl;
-  const showFallback = !displayUrl || imageError;
+  // Try multiple logo sources in order
+  const getLogoUrl = (): string | null => {
+    // 1. Use provided company_logo_url if available
+    if (companyLogoUrl) return companyLogoUrl;
+    
+    // 2. Use provided logo_url if available
+    if (logoUrl) return logoUrl;
+    
+    // 3. Try Clearbit with company domain
+    if (companyDomain && !fallbackAttempted) {
+      return `https://logo.clearbit.com/${companyDomain}`;
+    }
+    
+    // 4. Try to generate domain from company name and use Clearbit
+    if (!fallbackAttempted) {
+      const guessedDomain = company
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "")
+        .slice(0, 20) + ".com";
+      return `https://logo.clearbit.com/${guessedDomain}`;
+    }
+    
+    return null;
+  };
+  
+  const displayUrl = getLogoUrl();
+  const showFallback = !displayUrl || (imageError && fallbackAttempted);
   
   // Generate initials from company name
   const initials = company
@@ -98,6 +126,15 @@ function CompanyLogo({
   ];
   const colorIndex = company.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
   
+  const handleImageError = () => {
+    if (!fallbackAttempted) {
+      setFallbackAttempted(true);
+      setImageError(true);
+    } else {
+      setImageError(true);
+    }
+  };
+  
   return (
     <div 
       className={cn(
@@ -107,12 +144,12 @@ function CompanyLogo({
         className
       )}
     >
-      {!showFallback ? (
+      {!showFallback && displayUrl ? (
         <img 
           src={displayUrl} 
           alt={`${company} logo`}
           className="w-full h-full object-contain p-1.5"
-          onError={() => setImageError(true)}
+          onError={handleImageError}
           loading="lazy"
         />
       ) : (
@@ -194,6 +231,7 @@ export function PremiumJobCard({
         <CompanyLogo 
           logoUrl={job.logo_url}
           companyLogoUrl={job.company_logo_url}
+          companyDomain={job.company_domain}
           company={job.company}
           size="md"
         />

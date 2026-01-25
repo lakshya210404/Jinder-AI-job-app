@@ -342,7 +342,48 @@ async function ingestSource(
         continue;
       }
       
-      // Insert new job
+      // Insert new job with logo resolution
+      // Try to resolve logo from known domains
+      let companyLogoUrl: string | null = null;
+      let companyDomain: string | null = null;
+      let logoSource = "fallback";
+      
+      // Extract domain from company or apply URL
+      const extractDomain = (company: string, applyUrl: string): string | null => {
+        // Known company mappings
+        const knownDomains: Record<string, string> = {
+          "stripe": "stripe.com", "coinbase": "coinbase.com", "airbnb": "airbnb.com",
+          "anthropic": "anthropic.com", "vercel": "vercel.com", "figma": "figma.com",
+          "notion": "notion.so", "openai": "openai.com", "google": "google.com",
+          "meta": "meta.com", "apple": "apple.com", "amazon": "amazon.com",
+          "microsoft": "microsoft.com", "netflix": "netflix.com", "spotify": "spotify.com",
+          "uber": "uber.com", "lyft": "lyft.com", "doordash": "doordash.com",
+          "instacart": "instacart.com", "slack": "slack.com", "discord": "discord.com",
+          "github": "github.com", "gitlab": "gitlab.com", "dropbox": "dropbox.com",
+          "salesforce": "salesforce.com", "adobe": "adobe.com", "nvidia": "nvidia.com",
+          "pinterest": "pinterest.com", "reddit": "reddit.com", "snap": "snap.com",
+          "shopify": "shopify.com", "robinhood": "robinhood.com", "plaid": "plaid.com",
+          "brex": "brex.com", "ramp": "ramp.com", "datadog": "datadoghq.com",
+          "snowflake": "snowflake.com", "databricks": "databricks.com", "mongodb": "mongodb.com",
+          "cloudflare": "cloudflare.com", "twilio": "twilio.com", "airtable": "airtable.com",
+          "supabase": "supabase.com", "linear": "linear.app", "retool": "retool.com",
+        };
+        const companyLower = company.toLowerCase().trim();
+        if (knownDomains[companyLower]) return knownDomains[companyLower];
+        for (const [key, domain] of Object.entries(knownDomains)) {
+          if (companyLower.includes(key)) return domain;
+        }
+        // Fallback: clean company name
+        return company.toLowerCase().replace(/[^a-z0-9]/g, "") + ".com";
+      };
+      
+      companyDomain = extractDomain(job.company, job.apply_url);
+      if (companyDomain) {
+        // Use Clearbit logo URL (reliable and fast)
+        companyLogoUrl = `https://logo.clearbit.com/${companyDomain}`;
+        logoSource = "clearbit";
+      }
+      
       await supabase.from("jobs").insert({
         title: job.title,
         company: job.company,
@@ -359,6 +400,10 @@ async function ingestSource(
         salary_max: job.salary_max,
         salary_currency: job.salary_currency,
         logo_url: job.logo_url,
+        company_logo_url: companyLogoUrl,
+        company_domain: companyDomain,
+        logo_source: logoSource,
+        logo_last_verified_at: new Date().toISOString(),
         tech_stack: job.tech_stack,
         role_type: job.role_type,
         source_id: source.id,
