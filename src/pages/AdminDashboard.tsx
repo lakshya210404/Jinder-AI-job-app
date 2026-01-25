@@ -256,7 +256,7 @@ export default function AdminDashboard() {
 
   const handleTriggerLogos = async () => {
     try {
-      const result = await triggerLogoResolver.mutateAsync({ batch_size: 200 });
+      const result = await triggerLogoResolver.mutateAsync({ batch_size: 2000 });
       toast.success("Logo resolution complete", {
         description: `${result.successCount}/${result.processed} logos resolved`,
       });
