@@ -146,9 +146,9 @@ Extract the following using the suggest_classification function.`;
 }
 
 // =============================================
-// AUTH VALIDATION (CRON_SECRET or ANON_KEY for pg_cron)
+// AUTH VALIDATION (CRON, Service Role, Anon Key, or User JWT)
 // =============================================
-function validateAuth(req: Request): boolean {
+async function validateAuth(req: Request, supabaseUrl: string, supabaseKey: string): Promise<boolean> {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return false;
@@ -159,12 +159,14 @@ function validateAuth(req: Request): boolean {
   // Check CRON_SECRET
   const cronSecret = Deno.env.get("CRON_SECRET");
   if (cronSecret && token === cronSecret) {
+    log("info", "Authenticated via CRON_SECRET");
     return true;
   }
   
   // Check service role key
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (serviceRoleKey && token === serviceRoleKey) {
+    log("info", "Authenticated via service role key");
     return true;
   }
   
@@ -173,6 +175,18 @@ function validateAuth(req: Request): boolean {
   if (anonKey && token === anonKey) {
     log("info", "Authenticated via anon key (pg_cron)");
     return true;
+  }
+  
+  // Try to validate as a user JWT
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (!error && user) {
+      log("info", "Authenticated via user JWT", { userId: user.id });
+      return true;
+    }
+  } catch (e) {
+    log("warn", "JWT validation failed", { error: String(e) });
   }
   
   return false;
@@ -186,8 +200,11 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
   // Validate auth for automated calls
-  if (!validateAuth(req)) {
+  if (!await validateAuth(req, supabaseUrl, supabaseKey)) {
     log("warn", "Unauthorized request");
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -195,11 +212,7 @@ serve(async (req) => {
     });
   }
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
+  const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
 
   const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
   if (!lovableApiKey) {
