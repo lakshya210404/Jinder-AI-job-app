@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { JobFilters, JobFiltersState } from "@/components/jobs/JobFilters";
-import { JobGridCard } from "@/components/jobs/JobGridCard";
+import { PremiumJobCard, PremiumJobCardSkeleton, EnhancedJobData } from "@/components/jobs/PremiumJobCard";
 import { JobListCard, JobData } from "@/components/jobs/JobListCard";
-import { JobDetailDrawer } from "@/components/jobs/JobDetailDrawer";
+import { PremiumJobDrawer } from "@/components/jobs/PremiumJobDrawer";
 import { ActiveFiltersBar, ActiveFilter } from "@/components/jobs/ActiveFiltersBar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,11 +27,11 @@ const initialFilters: JobFiltersState = {
 type ViewMode = "grid" | "list";
 
 export default function Jobs() {
-  const [jobs, setJobs] = useState<JobData[]>([]);
+  const [jobs, setJobs] = useState<EnhancedJobData[]>([]);
   const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<JobFiltersState>(initialFilters);
-  const [selectedJob, setSelectedJob] = useState<JobData | null>(null);
+  const [selectedJob, setSelectedJob] = useState<EnhancedJobData | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const { user, loading: authLoading } = useAuth();
@@ -54,7 +54,7 @@ export default function Jobs() {
     setLoading(true);
     const { data, error } = await supabase
       .from("jobs")
-      .select("*")
+      .select("*, company_logo_url, company_domain, logo_source, ai_summary, ai_tech_stack, ai_responsibilities, ai_qualifications, ai_benefits, ai_visa_info, is_verified, is_trending")
       .order("freshness_rank", { ascending: false })
       .order("overall_rank_score", { ascending: false })
       .limit(100);
@@ -62,7 +62,7 @@ export default function Jobs() {
     if (error) {
       toast({ title: "Error loading jobs", description: error.message, variant: "destructive" });
     } else {
-      setJobs((data as JobData[]) || []);
+      setJobs((data as EnhancedJobData[]) || []);
     }
     setLoading(false);
   };
@@ -126,7 +126,7 @@ export default function Jobs() {
     });
   };
 
-  const handleGenerateResume = (job: JobData) => {
+  const handleGenerateResume = (job: EnhancedJobData) => {
     navigate("/resume", { state: { job } });
   };
 
@@ -369,20 +369,7 @@ export default function Jobs() {
         {loading ? (
           <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
             {Array.from({ length: 9 }).map((_, i) => (
-              <div key={i} className="bg-card border border-border rounded-2xl p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <Skeleton className="w-14 h-14 rounded-xl" />
-                  <Skeleton className="h-5 w-16 rounded-full" />
-                </div>
-                <Skeleton className="h-6 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-1/2 mb-1" />
-                <Skeleton className="h-4 w-2/3 mb-4" />
-                <div className="flex gap-2">
-                  <Skeleton className="h-6 w-16 rounded-full" />
-                  <Skeleton className="h-6 w-20 rounded-full" />
-                  <Skeleton className="h-6 w-14 rounded-full" />
-                </div>
-              </div>
+              <PremiumJobCardSkeleton key={i} />
             ))}
           </div>
         ) : filteredJobs.length === 0 ? (
@@ -397,7 +384,7 @@ export default function Jobs() {
         ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredJobs.map((job) => (
-              <JobGridCard
+              <PremiumJobCard
                 key={job.id}
                 job={job}
                 isSaved={savedJobs.has(job.id)}
@@ -429,8 +416,8 @@ export default function Jobs() {
         )}
       </div>
 
-      {/* Job Detail Drawer */}
-      <JobDetailDrawer
+      {/* Premium Job Detail Drawer */}
+      <PremiumJobDrawer
         job={selectedJob}
         open={drawerOpen}
         onOpenChange={setDrawerOpen}

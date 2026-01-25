@@ -140,6 +140,42 @@ export type Database = {
         }
         Relationships: []
       }
+      company_logos: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          domain: string
+          favicon_url: string | null
+          id: string
+          logo_url: string | null
+          source: string | null
+          updated_at: string
+          verified_at: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          domain: string
+          favicon_url?: string | null
+          id?: string
+          logo_url?: string | null
+          source?: string | null
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          domain?: string
+          favicon_url?: string | null
+          id?: string
+          logo_url?: string | null
+          source?: string | null
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       ingestion_logs: {
         Row: {
           completed_at: string | null
@@ -394,10 +430,20 @@ export type Database = {
       }
       jobs: {
         Row: {
+          ai_benefits: string[] | null
           ai_classification_at: string | null
           ai_classification_done: boolean | null
+          ai_enriched_at: string | null
+          ai_qualifications: string[] | null
+          ai_responsibilities: string[] | null
+          ai_summary: string | null
+          ai_tech_stack: string[] | null
+          ai_visa_info: string | null
+          application_count: number | null
           apply_url: string | null
           company: string
+          company_domain: string | null
+          company_logo_url: string | null
           competition_score: number | null
           created_at: string
           description: string
@@ -409,9 +455,13 @@ export type Database = {
           hiring_urgency_score: number | null
           id: string
           is_remote: boolean | null
+          is_trending: boolean | null
+          is_verified: boolean | null
           job_hash: string | null
           last_verified_at: string | null
           location: string
+          logo_last_verified_at: string | null
+          logo_source: string | null
           logo_url: string | null
           overall_rank_score: number | null
           posted_date: string | null
@@ -433,10 +483,20 @@ export type Database = {
           work_type: string
         }
         Insert: {
+          ai_benefits?: string[] | null
           ai_classification_at?: string | null
           ai_classification_done?: boolean | null
+          ai_enriched_at?: string | null
+          ai_qualifications?: string[] | null
+          ai_responsibilities?: string[] | null
+          ai_summary?: string | null
+          ai_tech_stack?: string[] | null
+          ai_visa_info?: string | null
+          application_count?: number | null
           apply_url?: string | null
           company: string
+          company_domain?: string | null
+          company_logo_url?: string | null
           competition_score?: number | null
           created_at?: string
           description: string
@@ -448,9 +508,13 @@ export type Database = {
           hiring_urgency_score?: number | null
           id?: string
           is_remote?: boolean | null
+          is_trending?: boolean | null
+          is_verified?: boolean | null
           job_hash?: string | null
           last_verified_at?: string | null
           location: string
+          logo_last_verified_at?: string | null
+          logo_source?: string | null
           logo_url?: string | null
           overall_rank_score?: number | null
           posted_date?: string | null
@@ -472,10 +536,20 @@ export type Database = {
           work_type?: string
         }
         Update: {
+          ai_benefits?: string[] | null
           ai_classification_at?: string | null
           ai_classification_done?: boolean | null
+          ai_enriched_at?: string | null
+          ai_qualifications?: string[] | null
+          ai_responsibilities?: string[] | null
+          ai_summary?: string | null
+          ai_tech_stack?: string[] | null
+          ai_visa_info?: string | null
+          application_count?: number | null
           apply_url?: string | null
           company?: string
+          company_domain?: string | null
+          company_logo_url?: string | null
           competition_score?: number | null
           created_at?: string
           description?: string
@@ -487,9 +561,13 @@ export type Database = {
           hiring_urgency_score?: number | null
           id?: string
           is_remote?: boolean | null
+          is_trending?: boolean | null
+          is_verified?: boolean | null
           job_hash?: string | null
           last_verified_at?: string | null
           location?: string
+          logo_last_verified_at?: string | null
+          logo_source?: string | null
           logo_url?: string | null
           overall_rank_score?: number | null
           posted_date?: string | null
