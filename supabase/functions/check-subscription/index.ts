@@ -76,12 +76,18 @@ serve(async (req) => {
       productId = subscription.items.data[0].price.product as string;
       
       // Map product IDs to plan slugs
+      // NOTE: If Stripe products change, update this mapping
       const productToPlan: Record<string, string> = {
         "prod_TqxsqwBXUWh8e4": "pro",
         "prod_TqxsTKL0wXBhTp": "power",
       };
-      planSlug = productToPlan[productId] || "pro";
+      // Default to 'free' tier for unknown products to prevent privilege escalation
+      planSlug = productToPlan[productId] || "free";
       
+      // Log unmapped product IDs for monitoring
+      if (!productToPlan[productId]) {
+        console.warn(`[CHECK-SUBSCRIPTION] Unknown product ID: ${productId} - defaulting to free tier`);
+      }
       logStep("Active subscription found", { subscriptionId: subscription.id, productId, planSlug });
     } else {
       logStep("No active subscription found");
