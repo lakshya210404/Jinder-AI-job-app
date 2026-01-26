@@ -994,6 +994,45 @@ export type Database = {
           },
         ]
       }
+      user_job_preferences: {
+        Row: {
+          company_exclude: string[] | null
+          created_at: string
+          desc_exclude: string[] | null
+          id: string
+          preferred_locations: string[] | null
+          title_exclude: string[] | null
+          title_include: string[] | null
+          updated_at: string
+          user_id: string
+          work_type_filter: string[] | null
+        }
+        Insert: {
+          company_exclude?: string[] | null
+          created_at?: string
+          desc_exclude?: string[] | null
+          id?: string
+          preferred_locations?: string[] | null
+          title_exclude?: string[] | null
+          title_include?: string[] | null
+          updated_at?: string
+          user_id: string
+          work_type_filter?: string[] | null
+        }
+        Update: {
+          company_exclude?: string[] | null
+          created_at?: string
+          desc_exclude?: string[] | null
+          id?: string
+          preferred_locations?: string[] | null
+          title_exclude?: string[] | null
+          title_include?: string[] | null
+          updated_at?: string
+          user_id?: string
+          work_type_filter?: string[] | null
+        }
+        Relationships: []
+      }
       user_projects: {
         Row: {
           architecture_diagram_url: string | null

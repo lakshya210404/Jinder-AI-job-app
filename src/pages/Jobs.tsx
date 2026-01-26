@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { JobFilters, JobFiltersState } from "@/components/jobs/JobFilters";
@@ -6,13 +6,19 @@ import { PremiumJobCard, PremiumJobCardSkeleton, EnhancedJobData } from "@/compo
 import { JobListCard, JobData } from "@/components/jobs/JobListCard";
 import { PremiumJobDrawer } from "@/components/jobs/PremiumJobDrawer";
 import { ActiveFiltersBar, ActiveFilter } from "@/components/jobs/ActiveFiltersBar";
+import { JobFilterSettings } from "@/components/jobs/JobFilterSettings";
+import { JobStatusActions } from "@/components/jobs/JobStatusActions";
 import { useAuth } from "@/hooks/useAuth";
+import { useJobPreferences } from "@/hooks/useJobPreferences";
+import { useJobInteractions } from "@/hooks/useJobInteractions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { LayoutGrid, List, Sparkles, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { LayoutGrid, List, Sparkles, TrendingUp, Clock, CheckCircle2, EyeOff } from "lucide-react";
 import { differenceInDays, differenceInHours } from "date-fns";
 
 const initialFilters: JobFiltersState = {
@@ -28,14 +34,25 @@ type ViewMode = "grid" | "list";
 
 export default function Jobs() {
   const [jobs, setJobs] = useState<EnhancedJobData[]>([]);
-  const [savedJobs, setSavedJobs] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<JobFiltersState>(initialFilters);
   const [selectedJob, setSelectedJob] = useState<EnhancedJobData | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [showHidden, setShowHidden] = useState(false);
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  
+  // Use the new hooks
+  const { filterJobs, preferences } = useJobPreferences();
+  const { 
+    setJobStatus, 
+    removeStatus, 
+    getJobStatus, 
+    isHidden, 
+    isSaved,
+    interactions 
+  } = useJobInteractions();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -46,7 +63,6 @@ export default function Jobs() {
   useEffect(() => {
     if (user) {
       fetchJobs();
-      fetchSavedJobs();
     }
   }, [user]);
 
@@ -67,63 +83,26 @@ export default function Jobs() {
     setLoading(false);
   };
 
-  const fetchSavedJobs = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("user_job_interactions")
-      .select("job_id")
-      .eq("user_id", user.id)
-      .eq("action", "saved");
+  // Handle status changes
+  const handleStatusChange = async (jobId: string, status: "saved" | "applied" | "rejected" | "interview" | "hidden") => {
+    await setJobStatus(jobId, status);
+  };
 
-    if (data) {
-      setSavedJobs(new Set(data.map((d) => d.job_id)));
-    }
+  const handleRemoveStatus = async (jobId: string) => {
+    await removeStatus(jobId);
   };
 
   const handleSaveJob = async (jobId: string) => {
-    if (!user) return;
-
-    const isSaved = savedJobs.has(jobId);
-
-    if (isSaved) {
-      await supabase
-        .from("user_job_interactions")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("job_id", jobId)
-        .eq("action", "saved");
-
-      setSavedJobs((prev) => {
-        const next = new Set(prev);
-        next.delete(jobId);
-        return next;
-      });
-      toast({ title: "Job removed from saved" });
+    const currentStatus = getJobStatus(jobId);
+    if (currentStatus === "saved") {
+      await removeStatus(jobId);
     } else {
-      await supabase.from("user_job_interactions").insert({
-        user_id: user.id,
-        job_id: jobId,
-        action: "saved",
-      });
-
-      setSavedJobs((prev) => new Set(prev).add(jobId));
-      toast({ title: "Job saved!" });
+      await setJobStatus(jobId, "saved");
     }
   };
 
   const handleApplyJob = async (jobId: string) => {
-    if (!user) return;
-
-    await supabase.from("user_job_interactions").insert({
-      user_id: user.id,
-      job_id: jobId,
-      action: "applied",
-    });
-
-    toast({
-      title: "Application submitted!",
-      description: "Good luck with your application.",
-    });
+    await setJobStatus(jobId, "applied");
   };
 
   const handleGenerateResume = (job: EnhancedJobData) => {
@@ -211,75 +190,86 @@ export default function Jobs() {
     }
   };
 
-  // Apply filters
-  const filteredJobs = jobs.filter((job) => {
-    // Search filter
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      const matchesSearch =
-        job.title.toLowerCase().includes(searchLower) ||
-        job.company.toLowerCase().includes(searchLower) ||
-        job.description.toLowerCase().includes(searchLower);
-      if (!matchesSearch) return false;
+  // Apply filters + user preferences + hidden status
+  const filteredJobs = useMemo(() => {
+    // First apply user preference keyword filters
+    let result = filterJobs(jobs);
+    
+    // Filter out hidden jobs unless showHidden is true
+    if (!showHidden) {
+      result = result.filter((job) => !isHidden(job.id));
     }
+    
+    // Then apply UI filters
+    return result.filter((job) => {
+      // Search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const matchesSearch =
+          job.title.toLowerCase().includes(searchLower) ||
+          job.company.toLowerCase().includes(searchLower) ||
+          job.description.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
 
-    // Job type filter
-    const jobTypeFilters = Array.isArray(filters.jobType) ? filters.jobType : [];
-    if (jobTypeFilters.length > 0) {
-      const jobWorkType = job.work_type.toLowerCase().replace("-", "").replace(" ", "");
-      const matches = jobTypeFilters.some((t) => {
-        const filterType = t.toLowerCase().replace("-", "").replace(" ", "");
-        return jobWorkType.includes(filterType) || filterType.includes(jobWorkType);
-      });
-      if (!matches) return false;
-    }
+      // Job type filter
+      const jobTypeFilters = Array.isArray(filters.jobType) ? filters.jobType : [];
+      if (jobTypeFilters.length > 0) {
+        const jobWorkType = job.work_type.toLowerCase().replace("-", "").replace(" ", "");
+        const matches = jobTypeFilters.some((t) => {
+          const filterType = t.toLowerCase().replace("-", "").replace(" ", "");
+          return jobWorkType.includes(filterType) || filterType.includes(jobWorkType);
+        });
+        if (!matches) return false;
+      }
 
-    // Work mode filter
-    const workModeFilters = Array.isArray(filters.workMode) ? filters.workMode : [];
-    if (workModeFilters.length > 0) {
-      const jobWorkType = job.work_type.toLowerCase();
-      const matches = workModeFilters.some((m) => jobWorkType.includes(m.toLowerCase()));
-      if (!matches) return false;
-    }
+      // Work mode filter
+      const workModeFilters = Array.isArray(filters.workMode) ? filters.workMode : [];
+      if (workModeFilters.length > 0) {
+        const jobWorkType = job.work_type.toLowerCase();
+        const matches = workModeFilters.some((m) => jobWorkType.includes(m.toLowerCase()));
+        if (!matches) return false;
+      }
 
-    // Salary filter
-    const salaryFilters = Array.isArray(filters.salaryMin) ? filters.salaryMin : [];
-    if (salaryFilters.length > 0 && job.salary_min) {
-      const minRequired = Math.min(...salaryFilters.map((s) => parseInt(s)));
-      if (job.salary_min < minRequired) return false;
-    }
+      // Salary filter
+      const salaryFilters = Array.isArray(filters.salaryMin) ? filters.salaryMin : [];
+      if (salaryFilters.length > 0 && job.salary_min) {
+        const minRequired = Math.min(...salaryFilters.map((s) => parseInt(s)));
+        if (job.salary_min < minRequired) return false;
+      }
 
-    // Date posted filter
-    const dateFilters = Array.isArray(filters.datePosted) ? filters.datePosted : [];
-    if (dateFilters.length > 0) {
-      const postedDate = job.posted_date ? new Date(job.posted_date) : new Date(job.created_at);
-      const now = new Date();
-      const hoursAgo = differenceInHours(now, postedDate);
-      const daysAgo = differenceInDays(now, postedDate);
+      // Date posted filter
+      const dateFilters = Array.isArray(filters.datePosted) ? filters.datePosted : [];
+      if (dateFilters.length > 0) {
+        const postedDate = job.posted_date ? new Date(job.posted_date) : new Date(job.created_at);
+        const now = new Date();
+        const hoursAgo = differenceInHours(now, postedDate);
+        const daysAgo = differenceInDays(now, postedDate);
 
-      const matches = dateFilters.some((d) => {
-        if (d === "24h") return hoursAgo <= 24;
-        if (d === "3d") return daysAgo <= 3;
-        if (d === "7d") return daysAgo <= 7;
-        if (d === "30d") return daysAgo <= 30;
-        return true;
-      });
-      if (!matches) return false;
-    }
+        const matches = dateFilters.some((d) => {
+          if (d === "24h") return hoursAgo <= 24;
+          if (d === "3d") return daysAgo <= 3;
+          if (d === "7d") return daysAgo <= 7;
+          if (d === "30d") return daysAgo <= 30;
+          return true;
+        });
+        if (!matches) return false;
+      }
 
-    // Location filter
-    const locationFilters = Array.isArray(filters.location) ? filters.location : [];
-    if (locationFilters.length > 0) {
-      const jobLocation = job.location.toLowerCase();
-      const matches = locationFilters.some((loc) => {
-        const locLower = loc.toLowerCase();
-        return jobLocation.includes(locLower) || locLower.includes(jobLocation);
-      });
-      if (!matches) return false;
-    }
+      // Location filter
+      const locationFilters = Array.isArray(filters.location) ? filters.location : [];
+      if (locationFilters.length > 0) {
+        const jobLocation = job.location.toLowerCase();
+        const matches = locationFilters.some((loc) => {
+          const locLower = loc.toLowerCase();
+          return jobLocation.includes(locLower) || locLower.includes(jobLocation);
+        });
+        if (!matches) return false;
+      }
 
-    return true;
-  });
+      return true;
+    });
+  }, [jobs, filters, filterJobs, isHidden, showHidden]);
 
   // Stats for header
   const freshJobsCount = jobs.filter((j) => {
@@ -327,11 +317,16 @@ export default function Jobs() {
         </div>
 
         {/* Filters */}
-        <JobFilters
-          filters={filters}
-          onFiltersChange={setFilters}
-          onClearFilters={handleClearFilters}
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex-1">
+            <JobFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+              onClearFilters={handleClearFilters}
+            />
+          </div>
+          <JobFilterSettings />
+        </div>
 
         {/* Active filters bar */}
         <ActiveFiltersBar
@@ -340,11 +335,24 @@ export default function Jobs() {
           onClearAll={handleClearFilters}
         />
 
-        {/* View toggle */}
+        {/* View toggle and show hidden */}
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Showing {filteredJobs.length} of {jobs.length} jobs
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-muted-foreground">
+              Showing {filteredJobs.length} of {jobs.length} jobs
+            </p>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="show-hidden"
+                checked={showHidden}
+                onCheckedChange={setShowHidden}
+              />
+              <Label htmlFor="show-hidden" className="text-sm text-muted-foreground flex items-center gap-1.5">
+                <EyeOff className="h-3.5 w-3.5" />
+                Show hidden
+              </Label>
+            </div>
+          </div>
           <div className="flex items-center gap-1 p-1 bg-secondary rounded-lg">
             <Button
               variant={viewMode === "grid" ? "default" : "ghost"}
@@ -387,7 +395,7 @@ export default function Jobs() {
               <PremiumJobCard
                 key={job.id}
                 job={job}
-                isSaved={savedJobs.has(job.id)}
+                isSaved={isSaved(job.id)}
                 onSave={handleSaveJob}
                 onClick={() => {
                   setSelectedJob(job);
@@ -402,7 +410,7 @@ export default function Jobs() {
               <JobListCard
                 key={job.id}
                 job={job}
-                isSaved={savedJobs.has(job.id)}
+                isSaved={isSaved(job.id)}
                 onSave={handleSaveJob}
                 onApply={handleApplyJob}
                 onGenerateResume={handleGenerateResume}
@@ -421,7 +429,7 @@ export default function Jobs() {
         job={selectedJob}
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
-        isSaved={selectedJob ? savedJobs.has(selectedJob.id) : false}
+        isSaved={selectedJob ? isSaved(selectedJob.id) : false}
         onSave={handleSaveJob}
         onApply={handleApplyJob}
         onGenerateResume={handleGenerateResume}
