@@ -7,18 +7,14 @@ import { JobListCard, JobData } from "@/components/jobs/JobListCard";
 import { PremiumJobDrawer } from "@/components/jobs/PremiumJobDrawer";
 import { ActiveFiltersBar, ActiveFilter } from "@/components/jobs/ActiveFiltersBar";
 import { JobFilterSettings } from "@/components/jobs/JobFilterSettings";
-import { JobStatusActions } from "@/components/jobs/JobStatusActions";
 import { useAuth } from "@/hooks/useAuth";
 import { useJobPreferences } from "@/hooks/useJobPreferences";
 import { useJobInteractions } from "@/hooks/useJobInteractions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { LayoutGrid, List, Sparkles, TrendingUp, Clock, CheckCircle2, EyeOff } from "lucide-react";
+import { LayoutGrid, List, Search, EyeOff } from "lucide-react";
 import { differenceInDays, differenceInHours } from "date-fns";
 
 const initialFilters: JobFiltersState = {
@@ -43,7 +39,6 @@ export default function Jobs() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   
-  // Use the new hooks
   const { filterJobs, preferences } = useJobPreferences();
   const { 
     setJobStatus, 
@@ -51,7 +46,6 @@ export default function Jobs() {
     getJobStatus, 
     isHidden, 
     isSaved,
-    interactions 
   } = useJobInteractions();
 
   useEffect(() => {
@@ -83,15 +77,6 @@ export default function Jobs() {
     setLoading(false);
   };
 
-  // Handle status changes
-  const handleStatusChange = async (jobId: string, status: "saved" | "applied" | "rejected" | "interview" | "hidden") => {
-    await setJobStatus(jobId, status);
-  };
-
-  const handleRemoveStatus = async (jobId: string) => {
-    await removeStatus(jobId);
-  };
-
   const handleSaveJob = async (jobId: string) => {
     const currentStatus = getJobStatus(jobId);
     if (currentStatus === "saved") {
@@ -113,24 +98,15 @@ export default function Jobs() {
     setFilters(initialFilters);
   };
 
-  // Build active filters for the bar
   const buildActiveFilters = (): ActiveFilter[] => {
     const activeFilters: ActiveFilter[] = [];
-    const filterColors: Record<string, string> = {
-      search: "bg-purple/15 text-purple border-purple/30",
-      jobType: "bg-orange/15 text-orange border-orange/30",
-      location: "bg-teal/15 text-teal border-teal/30",
-      workMode: "bg-blue/15 text-blue border-blue/30",
-      salaryMin: "bg-green/15 text-green border-green/30",
-      datePosted: "bg-pink/15 text-pink border-pink/30",
-    };
 
     if (filters.search) {
       activeFilters.push({
         key: "search",
         value: filters.search,
         label: `"${filters.search}"`,
-        color: filterColors.search,
+        color: "",
       });
     }
 
@@ -139,7 +115,7 @@ export default function Jobs() {
         key: "jobType",
         value: v,
         label: v.charAt(0).toUpperCase() + v.slice(1),
-        color: filterColors.jobType,
+        color: "",
       });
     });
 
@@ -148,7 +124,7 @@ export default function Jobs() {
         key: "location",
         value: v,
         label: v,
-        color: filterColors.location,
+        color: "",
       });
     });
 
@@ -157,14 +133,14 @@ export default function Jobs() {
         key: "workMode",
         value: v,
         label: v.charAt(0).toUpperCase() + v.slice(1),
-        color: filterColors.workMode,
+        color: "",
       });
     });
 
     filters.datePosted.forEach((v) => {
       const labels: Record<string, string> = {
-        "24h": "Past 24 hours",
-        "3d": "Past 3 days",
+        "24h": "Past 24h",
+        "3d": "Past 3d",
         "7d": "Past week",
         "30d": "Past month",
       };
@@ -172,7 +148,7 @@ export default function Jobs() {
         key: "datePosted",
         value: v,
         label: labels[v] || v,
-        color: filterColors.datePosted,
+        color: "",
       });
     });
 
@@ -190,19 +166,14 @@ export default function Jobs() {
     }
   };
 
-  // Apply filters + user preferences + hidden status
   const filteredJobs = useMemo(() => {
-    // First apply user preference keyword filters
     let result = filterJobs(jobs);
     
-    // Filter out hidden jobs unless showHidden is true
     if (!showHidden) {
       result = result.filter((job) => !isHidden(job.id));
     }
     
-    // Then apply UI filters
     return result.filter((job) => {
-      // Search filter
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         const matchesSearch =
@@ -212,7 +183,6 @@ export default function Jobs() {
         if (!matchesSearch) return false;
       }
 
-      // Job type filter
       const jobTypeFilters = Array.isArray(filters.jobType) ? filters.jobType : [];
       if (jobTypeFilters.length > 0) {
         const jobWorkType = job.work_type.toLowerCase().replace("-", "").replace(" ", "");
@@ -223,7 +193,6 @@ export default function Jobs() {
         if (!matches) return false;
       }
 
-      // Work mode filter
       const workModeFilters = Array.isArray(filters.workMode) ? filters.workMode : [];
       if (workModeFilters.length > 0) {
         const jobWorkType = job.work_type.toLowerCase();
@@ -231,14 +200,12 @@ export default function Jobs() {
         if (!matches) return false;
       }
 
-      // Salary filter
       const salaryFilters = Array.isArray(filters.salaryMin) ? filters.salaryMin : [];
       if (salaryFilters.length > 0 && job.salary_min) {
         const minRequired = Math.min(...salaryFilters.map((s) => parseInt(s)));
         if (job.salary_min < minRequired) return false;
       }
 
-      // Date posted filter
       const dateFilters = Array.isArray(filters.datePosted) ? filters.datePosted : [];
       if (dateFilters.length > 0) {
         const postedDate = job.posted_date ? new Date(job.posted_date) : new Date(job.created_at);
@@ -256,7 +223,6 @@ export default function Jobs() {
         if (!matches) return false;
       }
 
-      // Location filter
       const locationFilters = Array.isArray(filters.location) ? filters.location : [];
       if (locationFilters.length > 0) {
         const jobLocation = job.location.toLowerCase();
@@ -271,53 +237,35 @@ export default function Jobs() {
     });
   }, [jobs, filters, filterJobs, isHidden, showHidden]);
 
-  // Stats for header
-  const freshJobsCount = jobs.filter((j) => {
+  const newJobsCount = jobs.filter((j) => {
     const postedDate = j.posted_date ? new Date(j.posted_date) : new Date(j.created_at);
     return differenceInHours(new Date(), postedDate) <= 24;
   }).length;
 
-  const verifiedJobsCount = jobs.filter((j) => (j as any).verification_status === "verified_active").length;
-
   if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">Loading...</div>
       </div>
     );
   }
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Internships & Jobs</h1>
-            <p className="text-muted-foreground mt-1">
-              {loading ? "Loading..." : `${filteredJobs.length} opportunities from top companies`}
-            </p>
-          </div>
-
-          {/* Stats badges */}
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="gap-1.5 rounded-full px-3 py-1.5 bg-green/10 text-green border-green/30">
-              <Sparkles className="h-3.5 w-3.5" />
-              {freshJobsCount} new today
-            </Badge>
-            <Badge variant="outline" className="gap-1.5 rounded-full px-3 py-1.5 bg-blue/10 text-blue border-blue/30">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              {verifiedJobsCount} verified
-            </Badge>
-            <Badge variant="outline" className="gap-1.5 rounded-full px-3 py-1.5 bg-orange/10 text-orange border-orange/30">
-              <TrendingUp className="h-3.5 w-3.5" />
-              {jobs.length} total
-            </Badge>
-          </div>
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold text-foreground tracking-tight">Jobs</h1>
+          <p className="text-sm text-muted-foreground">
+            {loading ? "Loading..." : `${filteredJobs.length} opportunities`}
+            {!loading && newJobsCount > 0 && (
+              <span className="text-primary ml-1">· {newJobsCount} new today</span>
+            )}
+          </p>
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-start gap-3">
           <div className="flex-1">
             <JobFilters
               filters={filters}
@@ -328,65 +276,69 @@ export default function Jobs() {
           <JobFilterSettings />
         </div>
 
-        {/* Active filters bar */}
+        {/* Active filters */}
         <ActiveFiltersBar
           filters={buildActiveFilters()}
           onRemoveFilter={handleRemoveFilter}
           onClearAll={handleClearFilters}
         />
 
-        {/* View toggle and show hidden */}
+        {/* Controls */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <p className="text-sm text-muted-foreground">
-              Showing {filteredJobs.length} of {jobs.length} jobs
-            </p>
-            <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              {filteredJobs.length} of {jobs.length}
+            </span>
+            <label className="flex items-center gap-2 cursor-pointer">
               <Switch
-                id="show-hidden"
                 checked={showHidden}
                 onCheckedChange={setShowHidden}
+                className="scale-90"
               />
-              <Label htmlFor="show-hidden" className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <span className="text-sm text-muted-foreground flex items-center gap-1">
                 <EyeOff className="h-3.5 w-3.5" />
-                Show hidden
-              </Label>
-            </div>
+                Hidden
+              </span>
+            </label>
           </div>
-          <div className="flex items-center gap-1 p-1 bg-secondary rounded-lg">
-            <Button
-              variant={viewMode === "grid" ? "default" : "ghost"}
-              size="sm"
+          <div className="flex items-center gap-1 p-0.5 bg-secondary rounded-lg">
+            <button
               onClick={() => setViewMode("grid")}
-              className="rounded-md h-8 px-3"
+              className={`p-1.5 rounded-md transition-colors ${
+                viewMode === "grid" 
+                  ? "bg-background text-foreground shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
             >
               <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="sm"
+            </button>
+            <button
               onClick={() => setViewMode("list")}
-              className="rounded-md h-8 px-3"
+              className={`p-1.5 rounded-md transition-colors ${
+                viewMode === "list" 
+                  ? "bg-background text-foreground shadow-sm" 
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
             >
               <List className="h-4 w-4" />
-            </Button>
+            </button>
           </div>
         </div>
 
         {/* Job Grid/List */}
         {loading ? (
-          <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-4"}>
+          <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"}>
             {Array.from({ length: 9 }).map((_, i) => (
               <PremiumJobCardSkeleton key={i} />
             ))}
           </div>
         ) : filteredJobs.length === 0 ? (
-          <div className="text-center py-16 bg-card border border-border rounded-2xl">
-            <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No jobs found</h3>
-            <p className="text-muted-foreground mb-4">Try adjusting your filters or search terms</p>
-            <Button onClick={handleClearFilters} variant="outline" className="rounded-full">
-              Clear all filters
+          <div className="text-center py-16">
+            <Search className="h-10 w-10 text-muted-foreground/40 mx-auto mb-4" />
+            <h3 className="text-base font-medium mb-1">No jobs found</h3>
+            <p className="text-sm text-muted-foreground mb-4">Try adjusting your filters</p>
+            <Button onClick={handleClearFilters} variant="outline" size="sm" className="rounded-lg">
+              Clear filters
             </Button>
           </div>
         ) : viewMode === "grid" ? (
@@ -405,7 +357,7 @@ export default function Jobs() {
             ))}
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {filteredJobs.map((job) => (
               <JobListCard
                 key={job.id}
@@ -424,7 +376,6 @@ export default function Jobs() {
         )}
       </div>
 
-      {/* Premium Job Detail Drawer */}
       <PremiumJobDrawer
         job={selectedJob}
         open={drawerOpen}

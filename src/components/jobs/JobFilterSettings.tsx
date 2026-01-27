@@ -1,23 +1,20 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings2, X, Plus, Ban, Building2, FileText, Type } from "lucide-react";
+import { Settings2, X, Plus } from "lucide-react";
 import { useJobPreferences } from "@/hooks/useJobPreferences";
-import { cn } from "@/lib/utils";
 
 export function JobFilterSettings() {
   const { preferences, addExclusion, removeExclusion, loading } = useJobPreferences();
-  const [open, setOpen] = useState(false);
   const [newKeyword, setNewKeyword] = useState("");
   const [activeTab, setActiveTab] = useState<"title" | "desc" | "company">("title");
 
@@ -52,126 +49,114 @@ export function JobFilterSettings() {
     (preferences?.company_exclude?.length || 0);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2 rounded-full">
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline" size="icon" className="h-10 w-10 rounded-lg shrink-0 relative">
           <Settings2 className="h-4 w-4" />
-          Filter Settings
           {totalExclusions > 0 && (
-            <Badge variant="secondary" className="ml-1 rounded-full px-2">
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] font-medium rounded-full flex items-center justify-center">
               {totalExclusions}
-            </Badge>
+            </span>
           )}
         </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Ban className="h-5 w-5 text-destructive" />
-            Smart Job Filters
-          </DialogTitle>
-          <DialogDescription>
-            Automatically hide jobs that contain certain keywords in their title,
-            description, or from specific companies.
-          </DialogDescription>
-        </DialogHeader>
+      </SheetTrigger>
+      <SheetContent className="w-full sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>Filter Settings</SheetTitle>
+          <SheetDescription>
+            Automatically hide jobs based on keywords in the title, description, or company name.
+          </SheetDescription>
+        </SheetHeader>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="title" className="gap-1.5">
-              <Type className="h-3.5 w-3.5" />
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="mt-6">
+          <TabsList className="grid w-full grid-cols-3 h-9 rounded-lg bg-secondary p-0.5">
+            <TabsTrigger value="title" className="text-xs rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
               Title
               {(preferences?.title_exclude?.length || 0) > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
-                  {preferences?.title_exclude?.length}
-                </Badge>
+                <span className="ml-1 text-muted-foreground">
+                  ({preferences?.title_exclude?.length})
+                </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="desc" className="gap-1.5">
-              <FileText className="h-3.5 w-3.5" />
+            <TabsTrigger value="desc" className="text-xs rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
               Description
               {(preferences?.desc_exclude?.length || 0) > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
-                  {preferences?.desc_exclude?.length}
-                </Badge>
+                <span className="ml-1 text-muted-foreground">
+                  ({preferences?.desc_exclude?.length})
+                </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="company" className="gap-1.5">
-              <Building2 className="h-3.5 w-3.5" />
+            <TabsTrigger value="company" className="text-xs rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
               Company
               {(preferences?.company_exclude?.length || 0) > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
-                  {preferences?.company_exclude?.length}
-                </Badge>
+                <span className="ml-1 text-muted-foreground">
+                  ({preferences?.company_exclude?.length})
+                </span>
               )}
             </TabsTrigger>
           </TabsList>
 
           <div className="mt-4 space-y-4">
-            {/* Add new keyword input */}
+            {/* Add keyword */}
             <div className="flex gap-2">
               <Input
                 placeholder={
                   activeTab === "title"
-                    ? "e.g., senior, clinical, manager"
+                    ? "e.g., Senior, Manager"
                     : activeTab === "desc"
-                    ? "e.g., 5+ years, PhD required"
-                    : "e.g., Acme Corp, ClickJobs.io"
+                    ? "e.g., 5+ years"
+                    : "e.g., Acme Corp"
                 }
                 value={newKeyword}
                 onChange={(e) => setNewKeyword(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={loading}
+                className="h-9 rounded-lg"
               />
-              <Button onClick={handleAddKeyword} disabled={!newKeyword.trim() || loading}>
+              <Button 
+                size="sm" 
+                onClick={handleAddKeyword} 
+                disabled={!newKeyword.trim() || loading}
+                className="h-9 px-3 rounded-lg"
+              >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
 
-            {/* Current exclusions */}
-            <div className="min-h-[100px] rounded-lg border border-dashed p-4">
+            {/* Keywords list */}
+            <div className="min-h-[120px] rounded-lg border border-dashed border-border p-3">
               {getExclusionList().length === 0 ? (
-                <p className="text-center text-sm text-muted-foreground">
+                <p className="text-center text-xs text-muted-foreground py-8">
                   No {activeTab === "company" ? "companies" : "keywords"} blocked yet.
-                  <br />
-                  Add keywords above to filter out unwanted jobs.
                 </p>
               ) : (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {getExclusionList().map((keyword) => (
-                    <Badge
+                    <span
                       key={keyword}
-                      variant="secondary"
-                      className={cn(
-                        "gap-1.5 pr-1.5",
-                        activeTab === "company" && "bg-destructive/10 text-destructive"
-                      )}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-secondary rounded-md"
                     >
                       {keyword}
                       <button
                         onClick={() => removeExclusion(activeTab, keyword)}
-                        className="ml-1 rounded-full hover:bg-background/50 p-0.5"
+                        className="hover:text-destructive"
                       >
                         <X className="h-3 w-3" />
                       </button>
-                    </Badge>
+                    </span>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Helper text */}
             <p className="text-xs text-muted-foreground">
-              {activeTab === "title" &&
-                "Jobs with these words in the title will be hidden from your feed."}
-              {activeTab === "desc" &&
-                "Jobs mentioning these terms in the description will be hidden."}
-              {activeTab === "company" &&
-                "All jobs from these companies will be hidden from your feed."}
+              {activeTab === "title" && "Jobs with these words in the title will be hidden."}
+              {activeTab === "desc" && "Jobs with these terms in the description will be hidden."}
+              {activeTab === "company" && "All jobs from these companies will be hidden."}
             </p>
           </div>
         </Tabs>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

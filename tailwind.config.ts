@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -60,19 +60,20 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // Colorful accent colors
-        purple: "hsl(var(--color-purple))",
-        blue: "hsl(var(--color-blue))",
-        teal: "hsl(var(--color-teal))",
-        green: "hsl(var(--color-green))",
-        orange: "hsl(var(--color-orange))",
-        pink: "hsl(var(--color-pink))",
-        red: "hsl(var(--color-red))",
+        // Semantic colors
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
+        info: "hsl(var(--info))",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        'subtle': '0 1px 2px 0 rgb(0 0 0 / 0.03)',
+        'elevated': '0 2px 8px -2px rgb(0 0 0 / 0.08), 0 4px 16px -4px rgb(0 0 0 / 0.04)',
+        'float': '0 8px 24px -8px rgb(0 0 0 / 0.12)',
       },
       keyframes: {
         "accordion-down": {
@@ -83,20 +84,10 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        "swipe-right": {
-          "0%": { transform: "translateX(0) rotate(0)" },
-          "100%": { transform: "translateX(150%) rotate(20deg)", opacity: "0" },
-        },
-        "swipe-left": {
-          "0%": { transform: "translateX(0) rotate(0)" },
-          "100%": { transform: "translateX(-150%) rotate(-20deg)", opacity: "0" },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "swipe-right": "swipe-right 0.4s ease-out forwards",
-        "swipe-left": "swipe-left 0.4s ease-out forwards",
       },
     },
   },

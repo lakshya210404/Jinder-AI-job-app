@@ -1,7 +1,6 @@
-import { Search, X, MapPin, Clock, DollarSign, Calendar } from "lucide-react";
+import { Search, X, MapPin, Clock, DollarSign, Calendar, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { CountryCombobox } from "@/components/ui/country-combobox";
 import { CheckboxSelect } from "@/components/ui/checkbox-select";
 
@@ -63,56 +62,43 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
 
   const activeFiltersCount = Object.entries(filters).filter(([, v]) => isActive(v)).length;
 
-  const getFilterLabel = (key: string, values: string[]) => {
-    if (values.length === 0) return "";
-    const optionsMap: Record<string, { value: string; label: string }[]> = {
-      jobType: jobTypes,
-      workMode: workModes,
-      salaryMin: salaryRanges,
-      datePosted: datePostedOptions,
-    };
-    const options = optionsMap[key];
-    if (!options) return values.join(", ");
-    
-    const labels = values.map((v) => options.find((o) => o.value === v)?.label ?? v);
-    if (labels.length === 1) return labels[0];
-    return `${labels.length} selected`;
-  };
-
-  const activeFilters = Object.entries(filters)
-    .filter(([, v]) => isActive(v))
-    .map(([key, value]) => ({ key, value }));
-
   return (
-    <div className="space-y-4">
-      {/* Search Bar */}
+    <div className="space-y-3">
+      {/* Search */}
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search jobs, companies, or keywords..."
+          placeholder="Search jobs, companies..."
           value={filters.search}
           onChange={(e) => updateFilter("search", e.target.value)}
-          className="h-12 pl-12 pr-4 rounded-xl bg-secondary border-0 text-base"
+          className="h-10 pl-9 pr-4 rounded-lg bg-secondary/50 border-0 text-sm placeholder:text-muted-foreground/60"
         />
+        {filters.search && (
+          <button
+            onClick={() => updateFilter("search", "")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
-      {/* Filter Row */}
-      <div className="flex flex-wrap gap-3">
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2">
         <CheckboxSelect
           value={filters.jobType}
           onChange={(value) => updateFilter("jobType", value)}
           options={jobTypes}
-          placeholder="Job Type"
-          searchPlaceholder="Search job types..."
-          icon={<Clock className="h-4 w-4 text-purple" />}
-          className="w-[150px]"
+          placeholder="Type"
+          searchPlaceholder="Search..."
+          className="w-[110px]"
         />
 
-        <div className="w-[220px]">
+        <div className="w-[180px]">
           <CountryCombobox
             value={filters.location}
             onChange={(value) => updateFilter("location", value)}
-            placeholder="Select locations..."
+            placeholder="Location"
             multiSelect
           />
         </div>
@@ -121,10 +107,9 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
           value={filters.workMode}
           onChange={(value) => updateFilter("workMode", value)}
           options={workModes}
-          placeholder="Work Mode"
-          searchPlaceholder="Search modes..."
-          icon={<MapPin className="h-4 w-4 text-teal" />}
-          className="w-[160px]"
+          placeholder="Mode"
+          searchPlaceholder="Search..."
+          className="w-[100px]"
         />
 
         <CheckboxSelect
@@ -132,101 +117,30 @@ export function JobFilters({ filters, onFiltersChange, onClearFilters }: JobFilt
           onChange={(value) => updateFilter("salaryMin", value)}
           options={salaryRanges}
           placeholder="Salary"
-          searchPlaceholder="Search salary..."
-          icon={<DollarSign className="h-4 w-4 text-green" />}
-          className="w-[140px]"
+          searchPlaceholder="Search..."
+          className="w-[100px]"
         />
 
         <CheckboxSelect
           value={filters.datePosted}
           onChange={(value) => updateFilter("datePosted", value)}
           options={datePostedOptions}
-          placeholder="Date Posted"
-          searchPlaceholder="Search dates..."
-          icon={<Calendar className="h-4 w-4 text-blue" />}
-          className="w-[160px]"
+          placeholder="Date"
+          searchPlaceholder="Search..."
+          className="w-[100px]"
         />
-      </div>
 
-      {/* Active Filters */}
-      {activeFiltersCount > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-muted-foreground">Active filters:</span>
-          {activeFilters.map(({ key, value }) => {
-            // Define colors for different filter types
-            const filterColors: Record<string, string> = {
-              search: "bg-purple/10 text-purple border-purple/20",
-              jobType: "bg-purple/10 text-purple border-purple/20",
-              location: "bg-teal/10 text-teal border-teal/20",
-              workMode: "bg-blue/10 text-blue border-blue/20",
-              salaryMin: "bg-green/10 text-green border-green/20",
-              datePosted: "bg-orange/10 text-orange border-orange/20",
-            };
-            const colorClass = filterColors[key] || "bg-secondary text-secondary-foreground";
-
-            if (key === "search" && typeof value === "string") {
-              return (
-                <Badge
-                  key={key}
-                  variant="outline"
-                  className={`rounded-full px-3 py-1 gap-1 border ${colorClass}`}
-                >
-                  "{value}"
-                  <button
-                    onClick={() => updateFilter("search", "")}
-                    className="ml-1 hover:opacity-70"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              );
-            }
-            if (key === "location" && Array.isArray(value) && value.length > 0) {
-              return (
-                <Badge
-                  key={key}
-                  variant="outline"
-                  className={`rounded-full px-3 py-1 gap-1 border ${colorClass}`}
-                >
-                  {value.length === 1 ? value[0] : `${value.length} locations`}
-                  <button
-                    onClick={() => updateFilter("location", [])}
-                    className="ml-1 hover:opacity-70"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              );
-            }
-            if (Array.isArray(value) && value.length > 0) {
-              return (
-                <Badge
-                  key={key}
-                  variant="outline"
-                  className={`rounded-full px-3 py-1 gap-1 border ${colorClass}`}
-                >
-                  {getFilterLabel(key, value)}
-                  <button
-                    onClick={() => updateFilter(key as keyof JobFiltersState, [])}
-                    className="ml-1 hover:opacity-70"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              );
-            }
-            return null;
-          })}
+        {activeFiltersCount > 0 && (
           <Button
             variant="ghost"
             size="sm"
             onClick={onClearFilters}
-            className="text-muted-foreground hover:text-foreground"
+            className="h-10 px-3 text-muted-foreground hover:text-foreground text-sm"
           >
-            Clear all
+            Clear
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
