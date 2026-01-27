@@ -1,6 +1,5 @@
-import { MapPin, Clock, DollarSign, Bookmark, BookmarkCheck, Sparkles, ExternalLink } from "lucide-react";
+import { MapPin, Bookmark, BookmarkCheck, Sparkles, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 
 export interface JobData {
@@ -39,7 +38,7 @@ export function JobListCard({
 }: JobListCardProps) {
   const formatSalary = (min: number | null, max: number | null) => {
     if (!min && !max) return null;
-    if (min && max) return `$${(min / 1000).toFixed(0)}K - $${(max / 1000).toFixed(0)}K`;
+    if (min && max) return `$${(min / 1000).toFixed(0)}K – $${(max / 1000).toFixed(0)}K`;
     if (min) return `$${(min / 1000).toFixed(0)}K+`;
     if (max) return `Up to $${(max / 1000).toFixed(0)}K`;
   };
@@ -48,119 +47,89 @@ export function JobListCard({
   const postedAt = formatDistanceToNow(new Date(job.created_at), { addSuffix: true });
 
   return (
-    <div className="apple-card p-5 group cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
-      <div className="flex items-start gap-4">
-        {/* Logo */}
-        <div className="w-14 h-14 rounded-xl bg-secondary flex items-center justify-center text-2xl shrink-0 overflow-hidden">
-          {job.logo_url ? (
-            <img src={job.logo_url} alt={job.company} className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-muted-foreground font-semibold">
-              {job.company.charAt(0).toUpperCase()}
-            </span>
-          )}
+    <div 
+      className="flex items-center gap-4 p-4 bg-card border border-border rounded-xl cursor-pointer hover:shadow-elevated transition-all duration-200" 
+      onClick={onClick}
+    >
+      {/* Logo */}
+      <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
+        {job.logo_url ? (
+          <img src={job.logo_url} alt={job.company} className="w-full h-full object-contain p-1.5" />
+        ) : (
+          <span className="text-sm font-semibold text-muted-foreground">
+            {job.company.charAt(0).toUpperCase()}
+          </span>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <h3 className="font-medium text-foreground truncate">
+            {job.title}
+          </h3>
+          <span className="text-sm text-muted-foreground shrink-0 hidden sm:block">
+            {postedAt}
+          </span>
         </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="font-semibold text-foreground text-lg leading-tight">
-                  {job.title}
-                </h3>
-                {job.source === "external" && (
-                  <Badge variant="outline" className="rounded-full text-xs bg-secondary">
-                    Web
-                  </Badge>
-                )}
-              </div>
-              <p className="text-muted-foreground mt-0.5">{job.company}</p>
-            </div>
-            <span className="text-sm text-muted-foreground shrink-0">{postedAt}</span>
-          </div>
-
-          {/* Meta Info */}
-          <div className="flex flex-wrap items-center gap-3 mt-3">
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              <span>{job.location}</span>
-            </div>
-            <Badge variant="secondary" className="rounded-full text-xs font-medium">
-              {job.work_type}
-            </Badge>
-            {salary && (
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <DollarSign className="h-4 w-4" />
-                <span>{salary}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Requirements/Skills */}
-          {job.requirements && job.requirements.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {job.requirements.slice(0, 4).map((req, index) => (
-                <Badge
-                  key={index}
-                  variant="outline"
-                  className="rounded-full text-xs bg-background"
-                >
-                  {req}
-                </Badge>
-              ))}
-              {job.requirements.length > 4 && (
-                <Badge variant="outline" className="rounded-full text-xs bg-background">
-                  +{job.requirements.length - 4} more
-                </Badge>
-              )}
-            </div>
+        <div className="flex items-center gap-2 mt-0.5 text-sm text-muted-foreground">
+          <span>{job.company}</span>
+          <span>·</span>
+          <span className="flex items-center gap-1">
+            <MapPin className="h-3 w-3" />
+            {job.location}
+          </span>
+          {job.work_type && (
+            <>
+              <span>·</span>
+              <span>{job.work_type}</span>
+            </>
+          )}
+          {salary && (
+            <>
+              <span>·</span>
+              <span className="font-medium text-foreground">{salary}</span>
+            </>
           )}
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border" onClick={(e) => e.stopPropagation()}>
-        {job.apply_url ? (
-          <Button
-            asChild
-            className="rounded-full px-6"
-          >
-            <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
-              Apply
-              <ExternalLink className="h-4 w-4 ml-1.5" />
-            </a>
-          </Button>
-        ) : (
-          <Button
-            onClick={() => onApply?.(job.id)}
-            className="rounded-full px-6"
-          >
-            Apply Now
-          </Button>
-        )}
+      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
         <Button
-          variant="outline"
+          variant="ghost"
           size="icon"
-          className="rounded-full"
+          className="h-8 w-8 rounded-lg"
           onClick={() => onGenerateResume?.(job)}
-          title="Generate tailored resume"
+          title="Generate resume"
         >
-          <Sparkles className="h-4 w-4 text-orange" />
+          <Sparkles className="h-4 w-4 text-muted-foreground" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-full ml-auto"
+          className="h-8 w-8 rounded-lg"
           onClick={() => onSave?.(job.id)}
           title={isSaved ? "Remove from saved" : "Save job"}
         >
           {isSaved ? (
-            <BookmarkCheck className="h-5 w-5 text-pink" />
+            <BookmarkCheck className="h-4 w-4 text-primary" />
           ) : (
-            <Bookmark className="h-5 w-5" />
+            <Bookmark className="h-4 w-4 text-muted-foreground" />
           )}
         </Button>
+        {job.apply_url ? (
+          <Button asChild size="sm" className="h-8 px-3 rounded-lg text-xs">
+            <a href={job.apply_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+              Apply
+              <ArrowUpRight className="h-3 w-3" />
+            </a>
+          </Button>
+        ) : (
+          <Button size="sm" className="h-8 px-3 rounded-lg text-xs" onClick={() => onApply?.(job.id)}>
+            Apply
+          </Button>
+        )}
       </div>
     </div>
   );
