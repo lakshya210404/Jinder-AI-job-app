@@ -41,14 +41,14 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          {showSplash && !hasSeenSplash && (
-            <SplashScreen onComplete={handleSplashComplete} />
-          )}
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
+          <TooltipProvider>
+            {showSplash && !hasSeenSplash && (
+              <SplashScreen onComplete={handleSplashComplete} />
+            )}
+            <Toaster />
+            <Sonner />
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/jobs" element={<Jobs />} />
@@ -66,9 +66,9 @@ const App = () => {
               } />
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
+          </TooltipProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };
