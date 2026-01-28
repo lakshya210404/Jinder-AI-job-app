@@ -1,70 +1,65 @@
 const companies = [
-  { name: "Google", logo: "https://logo.clearbit.com/google.com" },
-  { name: "Apple", logo: "https://logo.clearbit.com/apple.com" },
-  { name: "Microsoft", logo: "https://logo.clearbit.com/microsoft.com" },
-  { name: "Amazon", logo: "https://logo.clearbit.com/amazon.com" },
-  { name: "Meta", logo: "https://logo.clearbit.com/meta.com" },
-  { name: "Netflix", logo: "https://logo.clearbit.com/netflix.com" },
-  { name: "Spotify", logo: "https://logo.clearbit.com/spotify.com" },
-  { name: "Airbnb", logo: "https://logo.clearbit.com/airbnb.com" },
-  { name: "Stripe", logo: "https://logo.clearbit.com/stripe.com" },
-  { name: "Notion", logo: "https://logo.clearbit.com/notion.so" },
-  { name: "Figma", logo: "https://logo.clearbit.com/figma.com" },
-  { name: "Slack", logo: "https://logo.clearbit.com/slack.com" },
-  { name: "GitHub", logo: "https://logo.clearbit.com/github.com" },
-  { name: "Vercel", logo: "https://logo.clearbit.com/vercel.com" },
-  { name: "OpenAI", logo: "https://logo.clearbit.com/openai.com" },
-  { name: "Coinbase", logo: "https://logo.clearbit.com/coinbase.com" },
+  { name: "Google", initials: "G", color: "bg-blue-500" },
+  { name: "Apple", initials: "A", color: "bg-gray-800" },
+  { name: "Microsoft", initials: "M", color: "bg-orange-500" },
+  { name: "Amazon", initials: "A", color: "bg-amber-600" },
+  { name: "Meta", initials: "M", color: "bg-blue-600" },
+  { name: "Netflix", initials: "N", color: "bg-red-600" },
+  { name: "Spotify", initials: "S", color: "bg-green-500" },
+  { name: "Airbnb", initials: "A", color: "bg-pink-500" },
+  { name: "Stripe", initials: "S", color: "bg-violet-600" },
+  { name: "Notion", initials: "N", color: "bg-gray-900" },
+  { name: "Figma", initials: "F", color: "bg-purple-500" },
+  { name: "Slack", initials: "S", color: "bg-emerald-600" },
+  { name: "GitHub", initials: "G", color: "bg-gray-900" },
+  { name: "Vercel", initials: "V", color: "bg-black" },
+  { name: "OpenAI", initials: "O", color: "bg-teal-600" },
+  { name: "Coinbase", initials: "C", color: "bg-blue-700" },
 ];
 
 const secondRow = [
-  { name: "Tesla", logo: "https://logo.clearbit.com/tesla.com" },
-  { name: "Uber", logo: "https://logo.clearbit.com/uber.com" },
-  { name: "Lyft", logo: "https://logo.clearbit.com/lyft.com" },
-  { name: "Dropbox", logo: "https://logo.clearbit.com/dropbox.com" },
-  { name: "Shopify", logo: "https://logo.clearbit.com/shopify.com" },
-  { name: "Square", logo: "https://logo.clearbit.com/squareup.com" },
-  { name: "Twilio", logo: "https://logo.clearbit.com/twilio.com" },
-  { name: "Datadog", logo: "https://logo.clearbit.com/datadog.com" },
-  { name: "Atlassian", logo: "https://logo.clearbit.com/atlassian.com" },
-  { name: "Adobe", logo: "https://logo.clearbit.com/adobe.com" },
-  { name: "Salesforce", logo: "https://logo.clearbit.com/salesforce.com" },
-  { name: "Oracle", logo: "https://logo.clearbit.com/oracle.com" },
-  { name: "IBM", logo: "https://logo.clearbit.com/ibm.com" },
-  { name: "Intel", logo: "https://logo.clearbit.com/intel.com" },
-  { name: "Nvidia", logo: "https://logo.clearbit.com/nvidia.com" },
-  { name: "AMD", logo: "https://logo.clearbit.com/amd.com" },
+  { name: "Tesla", initials: "T", color: "bg-red-700" },
+  { name: "Uber", initials: "U", color: "bg-black" },
+  { name: "Lyft", initials: "L", color: "bg-pink-600" },
+  { name: "Dropbox", initials: "D", color: "bg-blue-500" },
+  { name: "Shopify", initials: "S", color: "bg-green-600" },
+  { name: "Square", initials: "S", color: "bg-gray-900" },
+  { name: "Twilio", initials: "T", color: "bg-red-500" },
+  { name: "Datadog", initials: "D", color: "bg-purple-700" },
+  { name: "Atlassian", initials: "A", color: "bg-blue-600" },
+  { name: "Adobe", initials: "A", color: "bg-red-600" },
+  { name: "Salesforce", initials: "S", color: "bg-sky-500" },
+  { name: "Oracle", initials: "O", color: "bg-red-700" },
+  { name: "IBM", initials: "I", color: "bg-blue-800" },
+  { name: "Intel", initials: "I", color: "bg-blue-600" },
+  { name: "Nvidia", initials: "N", color: "bg-green-700" },
+  { name: "AMD", initials: "A", color: "bg-red-600" },
 ];
 
-function LogoItem({ name, logo }: { name: string; logo: string }) {
+function LogoItem({ name, initials, color }: { name: string; initials: string; color: string }) {
   return (
-    <div className="flex-shrink-0 flex items-center justify-center px-8 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
-      <img
-        src={logo}
-        alt={`${name} logo`}
-        className="h-7 w-auto object-contain"
-        loading="lazy"
-        onError={(e) => {
-          e.currentTarget.style.display = 'none';
-        }}
-      />
+    <div className="flex-shrink-0 flex items-center gap-2.5 px-6 opacity-60 hover:opacity-100 transition-all duration-300">
+      <div className={`w-8 h-8 ${color} rounded-lg flex items-center justify-center`}>
+        <span className="text-white text-sm font-semibold">{initials}</span>
+      </div>
+      <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">{name}</span>
     </div>
   );
 }
 
 export function CompanyMarquee() {
   return (
-    <section className="py-20 overflow-hidden bg-secondary/20">
+    <section className="py-20 overflow-hidden">
       <div className="text-center mb-12">
-        <p className="text-sm font-medium text-muted-foreground tracking-wide">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
           Users hired at
         </p>
       </div>
 
       {/* First row - scrolling left */}
-      <div className="relative mb-6">
-        <div className="absolute left-0 top-0 bottom-0 w-40 bg-gradient-to-r from-background to-transparent z-10" />
-        <div className="absolute right-0 top-0 bottom-0 w-40 bg-gradient-to-l from-background to-transparent z-10" />
+      <div className="relative mb-8">
+        <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-background to-transparent z-10" />
+        <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-background to-transparent z-10" />
 
         <div className="flex animate-marquee">
           {[...companies, ...companies, ...companies].map((company, index) => (
@@ -75,8 +70,8 @@ export function CompanyMarquee() {
 
       {/* Second row - scrolling right */}
       <div className="relative">
-        <div className="absolute left-0 top-0 bottom-0 w-40 bg-gradient-to-r from-background to-transparent z-10" />
-        <div className="absolute right-0 top-0 bottom-0 w-40 bg-gradient-to-l from-background to-transparent z-10" />
+        <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-background to-transparent z-10" />
+        <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-background to-transparent z-10" />
 
         <div className="flex animate-marquee-reverse">
           {[...secondRow, ...secondRow, ...secondRow].map((company, index) => (
