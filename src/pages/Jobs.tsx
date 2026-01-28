@@ -7,6 +7,7 @@ import { JobListCard, JobData } from "@/components/jobs/JobListCard";
 import { PremiumJobDrawer } from "@/components/jobs/PremiumJobDrawer";
 import { ActiveFiltersBar, ActiveFilter } from "@/components/jobs/ActiveFiltersBar";
 import { JobFilterSettings } from "@/components/jobs/JobFilterSettings";
+import { PageTransition } from "@/components/animations";
 import { useAuth } from "@/hooks/useAuth";
 import { useJobPreferences } from "@/hooks/useJobPreferences";
 import { useJobInteractions } from "@/hooks/useJobInteractions";
@@ -16,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { LayoutGrid, List, Search, EyeOff } from "lucide-react";
 import { differenceInDays, differenceInHours } from "date-fns";
+import { motion } from "framer-motion";
 
 const initialFilters: JobFiltersState = {
   search: "",
@@ -252,17 +254,18 @@ export default function Jobs() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold text-foreground tracking-tight">Jobs</h1>
-          <p className="text-sm text-muted-foreground">
-            {loading ? "Loading..." : `${filteredJobs.length} opportunities`}
-            {!loading && newJobsCount > 0 && (
-              <span className="text-primary ml-1">· {newJobsCount} new today</span>
-            )}
-          </p>
-        </div>
+      <PageTransition>
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold text-foreground tracking-tight">Jobs</h1>
+            <p className="text-sm text-muted-foreground">
+              {loading ? "Loading..." : `${filteredJobs.length} opportunities`}
+              {!loading && newJobsCount > 0 && (
+                <span className="text-primary ml-1">· {newJobsCount} new today</span>
+              )}
+            </p>
+          </div>
 
         {/* Filters */}
         <div className="flex items-start gap-3">
@@ -343,38 +346,51 @@ export default function Jobs() {
           </div>
         ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredJobs.map((job) => (
-              <PremiumJobCard
+            {filteredJobs.map((job, index) => (
+              <motion.div
                 key={job.id}
-                job={job}
-                isSaved={isSaved(job.id)}
-                onSave={handleSaveJob}
-                onClick={() => {
-                  setSelectedJob(job);
-                  setDrawerOpen(true);
-                }}
-              />
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03, duration: 0.3 }}
+              >
+                <PremiumJobCard
+                  job={job}
+                  isSaved={isSaved(job.id)}
+                  onSave={handleSaveJob}
+                  onClick={() => {
+                    setSelectedJob(job);
+                    setDrawerOpen(true);
+                  }}
+                />
+              </motion.div>
             ))}
           </div>
         ) : (
           <div className="space-y-3">
-            {filteredJobs.map((job) => (
-              <JobListCard
+            {filteredJobs.map((job, index) => (
+              <motion.div
                 key={job.id}
-                job={job}
-                isSaved={isSaved(job.id)}
-                onSave={handleSaveJob}
-                onApply={handleApplyJob}
-                onGenerateResume={handleGenerateResume}
-                onClick={() => {
-                  setSelectedJob(job);
-                  setDrawerOpen(true);
-                }}
-              />
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.02, duration: 0.3 }}
+              >
+                <JobListCard
+                  job={job}
+                  isSaved={isSaved(job.id)}
+                  onSave={handleSaveJob}
+                  onApply={handleApplyJob}
+                  onGenerateResume={handleGenerateResume}
+                  onClick={() => {
+                    setSelectedJob(job);
+                    setDrawerOpen(true);
+                  }}
+                />
+              </motion.div>
             ))}
           </div>
         )}
-      </div>
+        </div>
+      </PageTransition>
 
       <PremiumJobDrawer
         job={selectedJob}

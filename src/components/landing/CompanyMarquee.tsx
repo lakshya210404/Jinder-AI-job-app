@@ -47,14 +47,16 @@ function LogoItem({ name, initials, color }: { name: string; initials: string; c
   );
 }
 
+import { ScrollReveal } from "@/components/animations";
+
 export function CompanyMarquee() {
   return (
     <section className="py-20 overflow-hidden">
-      <div className="text-center mb-12">
+      <ScrollReveal className="text-center mb-12">
         <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
           Users hired at
         </p>
-      </div>
+      </ScrollReveal>
 
       {/* First row - scrolling left */}
       <div className="relative mb-8">

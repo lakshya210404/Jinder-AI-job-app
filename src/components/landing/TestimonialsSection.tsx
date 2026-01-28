@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Quote } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { ScrollReveal } from "@/components/animations";
 
 const testimonials = [
   {
@@ -86,7 +88,7 @@ export function TestimonialsSection() {
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-secondary/30">
       <div className="max-w-4xl mx-auto">
         {/* Section header */}
-        <div className="text-center mb-12">
+        <ScrollReveal className="text-center mb-12">
           <Badge variant="outline" className="mb-4 rounded-full px-4 py-1">
             <Quote className="h-3 w-3 mr-1 text-primary" />
             Success stories
@@ -97,7 +99,7 @@ export function TestimonialsSection() {
           <p className="text-lg text-muted-foreground">
             Real people landing real jobs with Jinder
           </p>
-        </div>
+        </ScrollReveal>
 
         {/* Testimonial card */}
         <div className="relative">
@@ -117,23 +119,31 @@ export function TestimonialsSection() {
 
             {/* Testimonial content */}
             <div className="relative z-10 text-center">
-              {/* Avatar */}
-              <div className={cn(
-                "w-20 h-20 rounded-full bg-gradient-to-br flex items-center justify-center text-white font-bold text-xl mx-auto mb-6 shadow-lg",
-                testimonials[activeIndex].avatarColor
-              )}>
-                {testimonials[activeIndex].avatar}
-              </div>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeIndex}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  {/* Avatar */}
+                  <div className={cn(
+                    "w-20 h-20 rounded-full bg-gradient-to-br flex items-center justify-center text-white font-bold text-xl mx-auto mb-6 shadow-lg",
+                    testimonials[activeIndex].avatarColor
+                  )}>
+                    {testimonials[activeIndex].avatar}
+                  </div>
 
-              {/* Quote */}
-              <blockquote className="text-lg sm:text-xl text-foreground mb-6 leading-relaxed">
-                "{testimonials[activeIndex].quote}"
-              </blockquote>
+                  {/* Quote */}
+                  <blockquote className="text-lg sm:text-xl text-foreground mb-6 leading-relaxed">
+                    "{testimonials[activeIndex].quote}"
+                  </blockquote>
 
-              {/* Author info */}
-              <div className="flex flex-col items-center gap-2">
-                <div className="font-semibold text-foreground">
-                  {testimonials[activeIndex].name}
+                  {/* Author info */}
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="font-semibold text-foreground">
+                      {testimonials[activeIndex].name}
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span>{testimonials[activeIndex].role}</span>
@@ -147,8 +157,10 @@ export function TestimonialsSection() {
                       e.currentTarget.style.display = 'none';
                     }}
                   />
-                </div>
-              </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
 
