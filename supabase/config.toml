@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.enrich-job]
 verify_jwt = false
+
+[functions.source-discovery]
+verify_jwt = false

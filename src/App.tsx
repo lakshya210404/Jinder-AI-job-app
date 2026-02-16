@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 import Settings from "./pages/Settings";
 import Pricing from "./pages/Pricing";
 import AdminDashboard from "./pages/AdminDashboard";
+import SourceDiscovery from "./pages/SourceDiscovery";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,11 @@ const App = () => {
               <Route path="/admin" element={
                 <AdminRoute>
                   <AdminDashboard />
+                </AdminRoute>
+              } />
+              <Route path="/admin/discovery" element={
+                <AdminRoute>
+                  <SourceDiscovery />
                 </AdminRoute>
               } />
               <Route path="*" element={<NotFound />} />
