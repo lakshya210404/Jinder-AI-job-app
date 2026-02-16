@@ -15,13 +15,18 @@ export const JinderLogo = ({ className, size = "md", showText = true }: JinderLo
   };
 
   return (
-    <Link to="/" className={cn("flex items-center", className)}>
-      <span className={cn(
-        "font-semibold tracking-tight text-foreground",
-        textSizeClasses[size]
-      )}>
-        Jinder
-      </span>
+    <Link to="/" className={cn("flex items-center gap-2", className)}>
+      <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+        <span className="text-primary-foreground font-bold text-sm">J</span>
+      </div>
+      {showText && (
+        <span className={cn(
+          "font-serif tracking-tight text-foreground",
+          textSizeClasses[size]
+        )}>
+          Jinder
+        </span>
+      )}
     </Link>
   );
 };

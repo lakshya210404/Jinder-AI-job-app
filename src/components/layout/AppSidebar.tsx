@@ -1,4 +1,4 @@
-import { Briefcase, BookmarkCheck, FileText, Sparkles, User, Settings, LogOut, ChevronRight } from "lucide-react";
+import { Briefcase, BookmarkCheck, FileText, Sparkles, User, Settings, LogOut } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { JinderLogo } from "@/components/JinderLogo";
 import { useAuth } from "@/hooks/useAuth";
@@ -49,25 +49,22 @@ export function AppSidebar() {
       <SidebarContent className="px-3">
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
+            <SidebarMenu className="space-y-1">
               {mainNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
                     isActive={isActive(item.url)}
                     className={cn(
-                      "h-10 rounded-lg px-3 transition-all duration-150 font-medium",
+                      "h-10 rounded-xl px-3 transition-all duration-200 font-medium",
                       isActive(item.url)
                         ? "bg-primary text-primary-foreground shadow-sm"
-                        : "hover:bg-accent"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
                     )}
                   >
                     <button onClick={() => navigate(item.url)} className="flex items-center gap-3 w-full">
                       <item.icon className="h-4 w-4" />
                       <span className="text-sm">{item.title}</span>
-                      {isActive(item.url) && (
-                        <ChevronRight className="h-3.5 w-3.5 ml-auto opacity-60" />
-                      )}
                     </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -79,14 +76,14 @@ export function AppSidebar() {
 
       <SidebarFooter className="p-3 mt-auto">
         <div className="h-px bg-border mb-3" />
-        <SidebarMenu className="space-y-0.5">
+        <SidebarMenu className="space-y-1">
           {bottomNavItems.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 asChild
                 isActive={isActive(item.url)}
                 className={cn(
-                  "h-9 rounded-lg px-3 transition-all duration-150",
+                  "h-9 rounded-xl px-3 transition-all duration-200",
                   isActive(item.url)
                     ? "bg-accent text-foreground font-medium"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -102,7 +99,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <Button
               variant="ghost"
-              className="w-full justify-start gap-3 h-9 px-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 font-normal"
+              className="w-full justify-start gap-3 h-9 px-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 font-normal rounded-xl"
               onClick={handleSignOut}
             >
               <LogOut className="h-4 w-4" />

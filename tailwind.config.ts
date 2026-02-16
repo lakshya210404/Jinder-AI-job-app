@@ -14,7 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', 'sans-serif'],
+        sans: ['DM Sans', 'sans-serif'],
+        serif: ['DM Serif Display', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",

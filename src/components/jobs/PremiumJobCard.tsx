@@ -201,8 +201,7 @@ export function PremiumJobCard({
   return (
     <div
       className={cn(
-        "group relative bg-card border border-border rounded-xl p-4 transition-all duration-200 cursor-pointer flex flex-col h-full",
-        "hover:shadow-elevated hover:border-border/60",
+        "group relative organic-card p-4 cursor-pointer flex flex-col h-full",
         isNew() && "border-primary/20"
       )}
       onClick={onClick}
@@ -325,8 +324,9 @@ export function PremiumJobCard({
 
 // Clean skeleton
 export function PremiumJobCardSkeleton() {
+  // Skeleton with organic card style
   return (
-    <div className="bg-card border border-border rounded-xl p-4 animate-pulse">
+    <div className="organic-card p-4 animate-pulse">
       <div className="flex items-start gap-3 mb-3">
         <div className="w-10 h-10 rounded-lg bg-secondary" />
         <div className="flex-1">
