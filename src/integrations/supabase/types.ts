@@ -176,6 +176,204 @@ export type Database = {
         }
         Relationships: []
       }
+      country_seeds: {
+        Row: {
+          country_code: string
+          country_name: string
+          created_at: string
+          id: string
+          industries: string[] | null
+          is_active: boolean | null
+          language: string | null
+          last_seeded_at: string | null
+          priority: number | null
+          search_queries: string[] | null
+          sources_found: number | null
+          timezone: string | null
+          top_cities: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          country_code: string
+          country_name: string
+          created_at?: string
+          id?: string
+          industries?: string[] | null
+          is_active?: boolean | null
+          language?: string | null
+          last_seeded_at?: string | null
+          priority?: number | null
+          search_queries?: string[] | null
+          sources_found?: number | null
+          timezone?: string | null
+          top_cities?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string
+          country_name?: string
+          created_at?: string
+          id?: string
+          industries?: string[] | null
+          is_active?: boolean | null
+          language?: string | null
+          last_seeded_at?: string | null
+          priority?: number | null
+          search_queries?: string[] | null
+          sources_found?: number | null
+          timezone?: string | null
+          top_cities?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      discovered_sources: {
+        Row: {
+          api_endpoint: string | null
+          base_url: string
+          company_name: string
+          country_code: string | null
+          created_at: string
+          discovery_method: string
+          discovery_run_id: string | null
+          domain: string | null
+          duplicate_of_source_id: string | null
+          has_consistent_structure: boolean | null
+          has_valid_apply_urls: boolean | null
+          id: string
+          is_duplicate: boolean | null
+          language: string | null
+          name: string
+          quality_score: number | null
+          respects_robots_txt: boolean | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sample_job_count: number | null
+          sample_jobs: Json | null
+          source_type: string
+          submission_url: string | null
+          submitted_by: string | null
+          updated_at: string
+          validation_error: string | null
+          validation_status: string | null
+        }
+        Insert: {
+          api_endpoint?: string | null
+          base_url: string
+          company_name: string
+          country_code?: string | null
+          created_at?: string
+          discovery_method: string
+          discovery_run_id?: string | null
+          domain?: string | null
+          duplicate_of_source_id?: string | null
+          has_consistent_structure?: boolean | null
+          has_valid_apply_urls?: boolean | null
+          id?: string
+          is_duplicate?: boolean | null
+          language?: string | null
+          name: string
+          quality_score?: number | null
+          respects_robots_txt?: boolean | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sample_job_count?: number | null
+          sample_jobs?: Json | null
+          source_type: string
+          submission_url?: string | null
+          submitted_by?: string | null
+          updated_at?: string
+          validation_error?: string | null
+          validation_status?: string | null
+        }
+        Update: {
+          api_endpoint?: string | null
+          base_url?: string
+          company_name?: string
+          country_code?: string | null
+          created_at?: string
+          discovery_method?: string
+          discovery_run_id?: string | null
+          domain?: string | null
+          duplicate_of_source_id?: string | null
+          has_consistent_structure?: boolean | null
+          has_valid_apply_urls?: boolean | null
+          id?: string
+          is_duplicate?: boolean | null
+          language?: string | null
+          name?: string
+          quality_score?: number | null
+          respects_robots_txt?: boolean | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sample_job_count?: number | null
+          sample_jobs?: Json | null
+          source_type?: string
+          submission_url?: string | null
+          submitted_by?: string | null
+          updated_at?: string
+          validation_error?: string | null
+          validation_status?: string | null
+        }
+        Relationships: []
+      }
+      discovery_runs: {
+        Row: {
+          completed_at: string | null
+          country_code: string | null
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          query_used: string | null
+          run_type: string
+          sources_approved: number | null
+          sources_discovered: number | null
+          sources_duplicate: number | null
+          sources_validated: number | null
+          started_at: string
+          status: string | null
+          target_ats: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          country_code?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          query_used?: string | null
+          run_type: string
+          sources_approved?: number | null
+          sources_discovered?: number | null
+          sources_duplicate?: number | null
+          sources_validated?: number | null
+          started_at?: string
+          status?: string | null
+          target_ats?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          country_code?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          query_used?: string | null
+          run_type?: string
+          sources_approved?: number | null
+          sources_discovered?: number | null
+          sources_duplicate?: number | null
+          sources_validated?: number | null
+          started_at?: string
+          status?: string | null
+          target_ats?: string | null
+        }
+        Relationships: []
+      }
       ingestion_logs: {
         Row: {
           completed_at: string | null
@@ -386,12 +584,19 @@ export type Database = {
       job_sources: {
         Row: {
           active_job_count: number | null
+          adaptive_poll_minutes: number | null
           api_endpoint: string | null
+          approved_at: string | null
+          approved_by: string | null
+          auto_discovered: boolean | null
           base_url: string
           company_name: string
           company_slug: string | null
           consecutive_failures: number | null
+          country_code: string | null
           created_at: string
+          discovery_method: string | null
+          domain: string | null
           failure_count_24h: number | null
           id: string
           is_priority_source: boolean | null
@@ -399,8 +604,11 @@ export type Database = {
           jobs_expired_24h: number | null
           jobs_seen_24h: number | null
           jobs_updated_24h: number | null
+          jobs_yield_7d: number | null
+          language: string | null
           last_error_message: string | null
           last_failure_at: string | null
+          last_job_found_at: string | null
           last_poll_at: string | null
           last_stats_computed_at: string | null
           last_success_at: string | null
@@ -409,21 +617,31 @@ export type Database = {
           next_poll_at: string | null
           poll_interval_minutes: number
           reliability_score: number | null
+          robots_txt_ok: boolean | null
+          source_quality_score: number | null
           source_type: Database["public"]["Enums"]["job_source_type"]
           status: Database["public"]["Enums"]["source_status"]
           success_count_24h: number | null
           tags: string[] | null
+          timezone: string | null
           total_jobs_ingested: number | null
           updated_at: string
         }
         Insert: {
           active_job_count?: number | null
+          adaptive_poll_minutes?: number | null
           api_endpoint?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          auto_discovered?: boolean | null
           base_url: string
           company_name: string
           company_slug?: string | null
           consecutive_failures?: number | null
+          country_code?: string | null
           created_at?: string
+          discovery_method?: string | null
+          domain?: string | null
           failure_count_24h?: number | null
           id?: string
           is_priority_source?: boolean | null
@@ -431,8 +649,11 @@ export type Database = {
           jobs_expired_24h?: number | null
           jobs_seen_24h?: number | null
           jobs_updated_24h?: number | null
+          jobs_yield_7d?: number | null
+          language?: string | null
           last_error_message?: string | null
           last_failure_at?: string | null
+          last_job_found_at?: string | null
           last_poll_at?: string | null
           last_stats_computed_at?: string | null
           last_success_at?: string | null
@@ -441,21 +662,31 @@ export type Database = {
           next_poll_at?: string | null
           poll_interval_minutes?: number
           reliability_score?: number | null
+          robots_txt_ok?: boolean | null
+          source_quality_score?: number | null
           source_type: Database["public"]["Enums"]["job_source_type"]
           status?: Database["public"]["Enums"]["source_status"]
           success_count_24h?: number | null
           tags?: string[] | null
+          timezone?: string | null
           total_jobs_ingested?: number | null
           updated_at?: string
         }
         Update: {
           active_job_count?: number | null
+          adaptive_poll_minutes?: number | null
           api_endpoint?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          auto_discovered?: boolean | null
           base_url?: string
           company_name?: string
           company_slug?: string | null
           consecutive_failures?: number | null
+          country_code?: string | null
           created_at?: string
+          discovery_method?: string | null
+          domain?: string | null
           failure_count_24h?: number | null
           id?: string
           is_priority_source?: boolean | null
@@ -463,8 +694,11 @@ export type Database = {
           jobs_expired_24h?: number | null
           jobs_seen_24h?: number | null
           jobs_updated_24h?: number | null
+          jobs_yield_7d?: number | null
+          language?: string | null
           last_error_message?: string | null
           last_failure_at?: string | null
+          last_job_found_at?: string | null
           last_poll_at?: string | null
           last_stats_computed_at?: string | null
           last_success_at?: string | null
@@ -473,10 +707,13 @@ export type Database = {
           next_poll_at?: string | null
           poll_interval_minutes?: number
           reliability_score?: number | null
+          robots_txt_ok?: boolean | null
+          source_quality_score?: number | null
           source_type?: Database["public"]["Enums"]["job_source_type"]
           status?: Database["public"]["Enums"]["source_status"]
           success_count_24h?: number | null
           tags?: string[] | null
+          timezone?: string | null
           total_jobs_ingested?: number | null
           updated_at?: string
         }
@@ -552,6 +789,7 @@ export type Database = {
           company_domain: string | null
           company_logo_url: string | null
           competition_score: number | null
+          country_code: string | null
           created_at: string
           description: string
           description_raw: string | null
@@ -567,6 +805,7 @@ export type Database = {
           is_trending: boolean | null
           is_verified: boolean | null
           job_hash: string | null
+          language: string | null
           last_seen_at: string | null
           last_verified_at: string | null
           location: string
@@ -609,6 +848,7 @@ export type Database = {
           company_domain?: string | null
           company_logo_url?: string | null
           competition_score?: number | null
+          country_code?: string | null
           created_at?: string
           description: string
           description_raw?: string | null
@@ -624,6 +864,7 @@ export type Database = {
           is_trending?: boolean | null
           is_verified?: boolean | null
           job_hash?: string | null
+          language?: string | null
           last_seen_at?: string | null
           last_verified_at?: string | null
           location: string
@@ -666,6 +907,7 @@ export type Database = {
           company_domain?: string | null
           company_logo_url?: string | null
           competition_score?: number | null
+          country_code?: string | null
           created_at?: string
           description?: string
           description_raw?: string | null
@@ -681,6 +923,7 @@ export type Database = {
           is_trending?: boolean | null
           is_verified?: boolean | null
           job_hash?: string | null
+          language?: string | null
           last_seen_at?: string | null
           last_verified_at?: string | null
           location?: string
@@ -871,6 +1114,56 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      source_submissions: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          credits_awarded: number | null
+          detected_ats_type: string | null
+          detected_company_name: string | null
+          discovered_source_id: string | null
+          id: string
+          status: string | null
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          credits_awarded?: number | null
+          detected_ats_type?: string | null
+          detected_company_name?: string | null
+          discovered_source_id?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          credits_awarded?: number | null
+          detected_ats_type?: string | null
+          detected_company_name?: string | null
+          discovered_source_id?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_submissions_discovered_source_id_fkey"
+            columns: ["discovered_source_id"]
+            isOneToOne: false
+            referencedRelation: "discovered_sources"
             referencedColumns: ["id"]
           },
         ]
@@ -1250,6 +1543,10 @@ export type Database = {
     }
     Functions: {
       calculate_freshness_rank: { Args: { posted: string }; Returns: number }
+      compute_adaptive_poll_interval: {
+        Args: { p_source_id: string }
+        Returns: number
+      }
       compute_source_stats: { Args: never; Returns: undefined }
       generate_job_hash: {
         Args: {
