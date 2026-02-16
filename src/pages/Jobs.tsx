@@ -257,8 +257,8 @@ export default function Jobs() {
       <PageTransition>
         <div className="max-w-6xl mx-auto space-y-6">
           {/* Header */}
-          <div className="space-y-1">
-            <h1 className="text-2xl font-semibold text-foreground tracking-tight">Jobs</h1>
+          <div className="space-y-2">
+            <h1 className="text-3xl font-serif text-foreground">Jobs</h1>
             <p className="text-sm text-muted-foreground">
               {loading ? "Loading..." : `${filteredJobs.length} opportunities`}
               {!loading && newJobsCount > 0 && (
