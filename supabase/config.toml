@@ -1,0 +1,37 @@
+project_id = "hdijrothlipwlosltiwl"
+
+[functions.generate-resume]
+verify_jwt = false
+
+[functions.fetch-jobs]
+verify_jwt = false
+
+[functions.scrape-job]
+verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.check-subscription]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false
+
+[functions.job-ingestion]
+verify_jwt = false
+
+[functions.job-classify]
+verify_jwt = false
+
+[functions.job-verify]
+verify_jwt = false
+
+[functions.logo-resolver]
+verify_jwt = false
+
+[functions.enrich-job]
+verify_jwt = false
+
+[functions.source-discovery]
+verify_jwt = false
